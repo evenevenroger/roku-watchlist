@@ -35,6 +35,7 @@
       <Font role="font" uri="font:BoldSystemFontFile" size="30" />
       <Font role="focusedFont" uri="font:BoldSystemFontFile" size="30" />
     </LabelList>
+    <Timer id="yearTimer" duration="0.25" repeat="false" />
     <Rectangle id="yearsLine" translation="[322,222]" width="2" height="820" color="0x262932FF" visible="false" />
     <RowList id="awardRows" translation="[360,222]" visible="false"
              itemComponentName="PosterItem"

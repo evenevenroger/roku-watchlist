@@ -51,6 +51,15 @@ sub init()
     m.grid.observeField("itemSelected", "onGridSelected")
     m.grid.observeField("itemFocused", "onGridFocused")
     m.years.observeField("itemFocused", "onYearFocused")
+    m.yearTimer = m.top.findNode("yearTimer")
+    m.yearTimer.observeField("fire", "onYearTimer")
+    m.listKey = ""       ' lista e filtros que estão montados na grade (voltar não remonta)
+    m.awardKey = ""      ' idem para a tela de prêmios
+    m.listSubtitle = ""
+    m.view = []
+    m.yearList = []
+    m.awardView = []
+    m.shownYear = ""
     m.awardRows.observeField("rowItemFocused", "onAwardFocused")
     m.awardRows.observeField("rowItemSelected", "onAwardSelected")
     m.optCats.observeField("itemSelected", "onCatSelected")
@@ -136,11 +145,13 @@ sub applyFeed(data as object)
             if it.strips = invalid then it.strips = []      ' cópia guardada de um build antigo
             ' o servidor manda só o código da imagem do IMDb
             if it.poster <> "" and Left(it.poster, 4) <> "http" then
-                it.poster = "https://m.media-amazon.com/images/M/" + it.poster + "._V1_QL75_UX300_.jpg"
+                it.poster = "https://m.media-amazon.com/images/M/" + it.poster + "._V1_QL75_UX220_.jpg"
             end if
         end for
     end for
     m.feed = data
+    m.listKey = ""
+    m.awardKey = ""
     if m.feed.rows.Count() = 0 then
         m.message.text = "Nenhum título das suas listas está nos seus serviços."
         return
@@ -232,7 +243,15 @@ sub showList()
     m.grid.visible = true
     m.focusInfo.visible = true
     m.hint.text = "*  ordenar e filtrar      Play  sortear"
-    rebuildView()
+    if m.listKey = m.rowIndex.ToStr() + FormatJson(m.opts) then
+        m.header.text = m.feed.rows[m.rowIndex].name
+        m.subtitle.text = m.listSubtitle
+        m.message.visible = (m.view.Count() = 0)
+        i = m.grid.itemFocused
+        if i >= 0 and i < m.view.Count() then showFocusInfo(m.view[i])
+    else
+        rebuildView()
+    end if
     m.grid.setFocus(true)
 end sub
 
@@ -309,6 +328,8 @@ sub rebuildView()
     m.subtitle.text = parts.Join("   ·   ")
     m.message.visible = (view.Count() = 0)
     if view.Count() = 0 then m.message.text = "Nada com esses filtros. Aperte * para mudar."
+    m.listSubtitle = m.subtitle.text
+    m.listKey = m.rowIndex.ToStr() + FormatJson(m.opts)
 end sub
 
 function activeFilters() as string
@@ -579,7 +600,7 @@ end sub
 
 sub showDetails(it as object)
     m.current = it
-    m.dPoster.uri = it.poster.Replace("UX300", "UX500")
+    m.dPoster.uri = it.poster.Replace("UX220", "UX500").Replace("UX300", "UX500")
     m.dTitle.text = it.title
     meta = []
     if it.year <> "" then meta.Push(it.year)
@@ -736,6 +757,17 @@ sub showAwards()
     m.hint.text = "<  >  anos e filmes      Play  sortear"
     m.focusInfo.visible = true
     m.focusInfo.text = ""
+    if m.awardKey = m.rowIndex.ToStr() and m.yearList.Count() > 0 then
+        m.years.visible = true
+        m.yearsLine.visible = true
+        m.awardRows.visible = true
+        m.message.visible = false
+        f = m.awardRows.rowItemFocused
+        if f <> invalid and f.Count() = 2 and f[0] < m.awardView.Count() and f[1] < m.awardView[f[0]].Count() then showFocusInfo(m.awardView[f[0]][f[1]])
+        m.years.setFocus(true)
+        return
+    end if
+    m.awardKey = m.rowIndex.ToStr()
 
     ' anos que têm algum filme nos seus serviços, com a quantidade
     counts = {}
@@ -772,13 +804,21 @@ sub showAwards()
     m.years.setFocus(true)
 end sub
 
+' Passando rápido pelos anos, só monta as fileiras do ano em que o cursor parar.
 sub onYearFocused()
+    if m.screen <> "awards" then return
+    m.yearTimer.control = "stop"
+    m.yearTimer.control = "start"
+end sub
+
+sub onYearTimer()
     i = m.years.itemFocused
-    if m.screen = "awards" and i >= 0 and i < m.yearList.Count() then buildAwardRows(m.yearList[i].y)
+    if m.screen = "awards" and i >= 0 and i < m.yearList.Count() and m.yearList[i].y <> m.shownYear then buildAwardRows(m.yearList[i].y)
 end sub
 
 ' Oscar: uma fileira por categoria, vencedor primeiro. Cannes: uma fileira com os premiados do ano.
 sub buildAwardRows(year as string)
+    m.shownYear = year
     row = m.feed.rows[m.rowIndex]
     isOscar = (row.id = "award:oscar")
     m.awardView = []
@@ -896,6 +936,7 @@ sub onSearchButton()
     end for
     removeSearchRow()
     m.feed.rows.Push({ id: "search", name: "Busca: " + q, total: results.Count(), award: false, items: results })
+    m.listKey = ""
     m.rowIndex = m.feed.rows.Count() - 1
     resetOptions()
     m.opts.sort = 1

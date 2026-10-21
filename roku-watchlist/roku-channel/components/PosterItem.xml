@@ -7,7 +7,7 @@
   <script type="text/brightscript" uri="pkg:/components/PosterItem.brs" />
   <children>
     <Rectangle width="220" height="330" color="0x22252EFF" />
-    <Poster id="poster" width="220" height="330" loadDisplayMode="scaleToZoom" />
+    <Poster id="poster" width="220" height="330" loadWidth="220" loadHeight="330" loadDisplayMode="scaleToZoom" />
 
     <Rectangle id="imdbBg" translation="[8,8]" width="54" height="30" color="0x0000006B" />
     <Label id="imdb" translation="[8,8]" width="54" height="30" horizAlign="center" vertAlign="center" color="0xF5C518FF">
