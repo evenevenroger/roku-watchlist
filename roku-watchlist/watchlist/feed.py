@@ -6,9 +6,10 @@ import os
 import zipfile
 
 import time
+import unicodedata
 
 from .awards import AWARD_ICONS, AWARD_NAMES, AWARDS
-from .common import CHANNEL_DIR, CONFIG, RECENT_PATH, lan_ip, load_json, save_json
+from .common import CACHE_PATH, CHANNEL_DIR, CONFIG, RECENT_PATH, RT_PATH, lan_ip, load_json, save_json
 from .data import build_payload
 
 
@@ -120,6 +121,96 @@ def roku_feed(fmt=1, have=""):
         return {"same": True, "version": version}
     feed["version"] = version
     return feed
+
+
+# ---------- canal build 12+: tela inicial enxuta, uma lista por vez e busca no PC ----------
+
+_memo = {"key": None, "feed": None}
+
+
+def _mtime(path):
+    try:
+        return os.path.getmtime(path)
+    except OSError:
+        return 0
+
+
+def compact_feed():
+    """Feed fmt 3 (sem os campos antigos), refeito só quando os dados mudam (ou a cada hora,
+    por causa da janela de novidades)."""
+    key = (_mtime(CACHE_PATH), _mtime(RT_PATH), _mtime(RECENT_PATH), int(time.time() // 3600))
+    if _memo["key"] != key:
+        feed = roku_feed_full()
+        for r in feed["rows"]:
+            for it in r["items"]:
+                it.pop("awardOtherText", None)
+                it.pop("strip", None)
+                p = it.get("poster") or ""
+                if p.startswith(POSTER_PRE) and p.endswith(POSTER_SUF):
+                    it["poster"] = p[len(POSTER_PRE):-len(POSTER_SUF)]
+        _memo.update(key=key, feed=feed)
+    return _memo["feed"]
+
+
+def _hash(obj):
+    return hashlib.md5(json.dumps(obj, ensure_ascii=False, sort_keys=True).encode()).hexdigest()[:16]
+
+
+def _row_payload(feed, r):
+    det = {i["id"]: feed["details"][i["id"]] for i in r["items"] if i["id"] in feed["details"]}
+    body = {"row": r, "details": det}
+    return body, _hash(body)
+
+
+def roku_home(have=""):
+    """Só os cartões: nome, quantidades, as 3 capas e a versão de cada lista."""
+    feed = compact_feed()
+    rows = []
+    for r in feed["rows"]:
+        _, v = _row_payload(feed, r)
+        items = r["items"] if r["id"] in ("new", "recent") else sorted(r["items"], key=lambda i: -i["r"])
+        rows.append({"id": r["id"], "name": r["name"], "total": r["total"], "award": r["award"],
+                     "count": len(r["items"]), "v": v, "covers": [i["poster"] for i in items[:3]]})
+    home = {"rows": rows, "status": feed["status"], "server": feed["server"]}
+    version = _hash(home)
+    if have and have == version:
+        return {"same": True, "version": version}
+    home["version"] = version
+    return home
+
+
+def roku_list(list_id, have=""):
+    feed = compact_feed()
+    r = next((r for r in feed["rows"] if r["id"] == list_id), None)
+    if r is None:
+        return {"error": "lista não encontrada"}
+    body, v = _row_payload(feed, r)
+    if have and have == v:
+        return {"same": True, "v": v}
+    return {**body, "v": v}
+
+
+def _fold(text):
+    return "".join(c for c in unicodedata.normalize("NFD", (text or "").lower()) if unicodedata.category(c) != "Mn")
+
+
+def roku_search(q):
+    """Títulos de todas as listas cujo nome (em português ou original) contém q, sem ligar para acentos."""
+    feed = compact_feed()
+    q = _fold(q).strip()
+    found = {}
+    for r in feed["rows"]:
+        for it in r["items"]:
+            if q and (q in _fold(it["title"]) or q in _fold(it.get("orig"))):
+                if it["id"] not in found or (found[it["id"]][0] and not r["award"]):
+                    found[it["id"]] = (r["award"], it)
+    items = []
+    for _, it in found.values():
+        it = dict(it)
+        it["pos"] = len(items)
+        items.append(it)
+    det = {i["id"]: feed["details"][i["id"]] for i in items if i["id"] in feed["details"]}
+    return {"items": items, "details": det}
 
 
 def roku_feed_full():

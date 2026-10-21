@@ -10,7 +10,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from .common import CACHE_PATH, CONFIG, STATIC, lan_ip, load_json, log, state
 from .data import build_payload, sync
-from .feed import build_channel_zip, record_play, roku_feed
+from .feed import build_channel_zip, record_play, roku_feed, roku_home, roku_list, roku_search
 from .roku import KEYS, play_link, roku_post
 from .rottentomatoes import rt_worker
 
@@ -61,10 +61,17 @@ class Handler(BaseHTTPRequestHandler):
             return self.send(200, build_payload())
         if path == "/api/status":
             return self.send(200, {**state, "app": "minha-watchlist"})   # o canal reconhece o PC por aqui
-        if path == "/api/roku":
+        if path.startswith("/api/roku"):
             q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
-            fmt = int((q.get("fmt") or ["1"])[0] or 1)
-            return self.send(200, roku_feed(fmt, (q.get("v") or [""])[0]))
+            arg = lambda k: (q.get(k) or [""])[0]   # noqa: E731
+            if path == "/api/roku/list":
+                return self.send(200, roku_list(arg("id"), arg("v")))
+            if path == "/api/roku/search":
+                return self.send(200, roku_search(arg("q")))
+            fmt = int(arg("fmt") or 1)
+            if fmt >= 4:                            # canal build 12+: só os cartões da tela inicial
+                return self.send(200, roku_home(arg("v")))
+            return self.send(200, roku_feed(fmt, arg("v")))
         if path == "/roku-channel.zip":
             return self.send(200, build_channel_zip(self.headers.get("Host")),
                              "application/zip")

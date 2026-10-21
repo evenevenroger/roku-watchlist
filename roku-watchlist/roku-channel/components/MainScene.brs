@@ -66,6 +66,21 @@ sub init()
     m.optVals.observeField("itemSelected", "onValSelected")
     m.dButtons.observeField("buttonSelected", "onButtonSelected")
 
+    m.loaded = {}          ' listas já carregadas nesta sessão (id -> true)
+    m.rowLoading = ""      ' lista sendo carregada agora
+    m.posterQueue = []     ' capas a guardar no Roku
+    m.posterQueued = {}
+    m.posterQueued.SetModeCaseSensitive()
+    m.posterTask = invalid
+    m.posterCache = {}     ' capas já guardadas (os códigos diferenciam maiúsculas)
+    m.posterCache.SetModeCaseSensitive()
+    listing = CreateObject("roFileSystem").GetDirectoryListing("cachefs:/p")
+    if listing <> invalid then
+        for each name in listing
+            if Right(name, 4) = ".jpg" then m.posterCache[Left(name, Len(name) - 4)] = true
+        end for
+    end if
+
     m.offline = false
     m.pendingFeed = invalid
     m.cachedDone = false
@@ -135,21 +150,12 @@ sub onFeed()
     end if
 end sub
 
-' Prepara os itens (textos que o servidor não repete) e monta os cartões da tela inicial.
+' Tela inicial: só os cartões (nome, quantidades, 3 capas e a versão de cada lista).
+' Os filmes de cada lista chegam quando você entra nela (loadRow).
 sub applyFeed(data as object)
-    for each row in data.rows
-        for each it in row.items
-            it.genres = it.genreList.Join(", ")
-            it.directors = it.directorList.Join(", ")
-            it.sortTitle = LCase(it.title)
-            if it.strips = invalid then it.strips = []      ' cópia guardada de um build antigo
-            ' o servidor manda só o código da imagem do IMDb
-            if it.poster <> "" and Left(it.poster, 4) <> "http" then
-                it.poster = "https://m.media-amazon.com/images/M/" + it.poster + "._V1_QL75_UX220_.jpg"
-            end if
-        end for
-    end for
     m.feed = data
+    m.feed.details = {}
+    m.loaded = {}
     m.listKey = ""
     m.awardKey = ""
     if m.feed.rows.Count() = 0 then
@@ -160,24 +166,69 @@ sub applyFeed(data as object)
     for each row in m.feed.rows
         card = root.createChild("ContentNode")
         card.title = row.name
-        card.ShortDescriptionLine1 = row.items.Count().ToStr() + " para assistir agora  ·  " + row.total.ToStr() + " na lista"
-        ' capas do cartão: as 3 maiores notas IMDb (novidades: as 3 mais recentes)
-        top = []
-        top.Append(row.items)
         if row.id = "new" then
-            card.ShortDescriptionLine1 = row.items.Count().ToStr() + " títulos nas últimas 3 semanas"
+            card.ShortDescriptionLine1 = row.count.ToStr() + " títulos nas últimas 3 semanas"
         else if row.id = "recent" then
-            card.ShortDescriptionLine1 = row.items.Count().ToStr() + " títulos que você abriu pelo canal"
+            card.ShortDescriptionLine1 = row.count.ToStr() + " títulos que você abriu pelo canal"
         else
-            top.SortBy("r", "r")
+            card.ShortDescriptionLine1 = row.count.ToStr() + " para assistir agora  ·  " + row.total.ToStr() + " na lista"
         end if
-        card.HDPosterUrl = posterAt(top, 0)
-        card.SDPosterUrl = posterAt(top, 1)
-        card.FHDPosterUrl = posterAt(top, 2)
+        ' capas do cartão: as 3 maiores notas IMDb (novidades e vistos: as 3 mais recentes)
+        card.HDPosterUrl = coverAt(row.covers, 0)
+        card.SDPosterUrl = coverAt(row.covers, 1)
+        card.FHDPosterUrl = coverAt(row.covers, 2)
     end for
     m.home.content = root
     m.message.visible = false
+    flushPosters()
     showHome()
+end sub
+
+function coverAt(covers as dynamic, i as integer) as string
+    if covers = invalid or covers.Count() <= i then return ""
+    return posterUri(covers[i])
+end function
+
+' Textos que o servidor não repete e o endereço da capa (guardada no Roku, se já tiver).
+sub prepItems(items as object)
+    for each it in items
+        it.genres = it.genreList.Join(", ")
+        it.directors = it.directorList.Join(", ")
+        it.sortTitle = LCase(it.title)
+        if it.strips = invalid then it.strips = []
+        it.posterWeb = posterWeb(it.poster)
+        it.poster = posterUri(it.poster)
+    end for
+end sub
+
+' Capa guardada no Roku se já existir; senão a da internet, e entra na fila para guardar.
+function posterUri(code as string) as string
+    if code = "" or Left(code, 4) = "http" then return code
+    key = code.Replace("@", "_")
+    if m.posterCache.DoesExist(key) then return posterFile(code)
+    if not m.posterQueued.DoesExist(key) then
+        m.posterQueued[key] = true
+        m.posterQueue.Push(code)
+    end if
+    return posterWeb(code)
+end function
+
+sub flushPosters()
+    if m.posterTask <> invalid or m.posterQueue.Count() = 0 then return
+    m.posterTask = CreateObject("roSGNode", "ApiTask")
+    m.posterTask.observeField("result", "onPostersSaved")
+    m.posterTask.mode = "posters"
+    m.posterTask.body = { codes: m.posterQueue }
+    m.posterQueue = []
+    m.posterTask.control = "RUN"
+end sub
+
+sub onPostersSaved()
+    for each code in m.posterTask.result.codes
+        m.posterCache[code.Replace("@", "_")] = true
+    end for
+    m.posterTask = invalid
+    flushPosters()
 end sub
 
 ' Linha de status da tela inicial: quando os dados foram atualizados e se algo falhou.
@@ -193,11 +244,6 @@ function statusText() as string
         if st.error <> "" then parts.Push("Última atualização falhou: " + st.error)
     end if
     return parts.Join("   ·   ")
-end function
-
-function posterAt(items as object, i as integer) as string
-    if items.Count() > i then return items[i].poster
-    return ""
 end function
 
 ' ---------- tela inicial ----------
@@ -227,6 +273,60 @@ end sub
 
 sub onHomeSelected()
     m.rowIndex = m.home.itemSelected
+    row = m.feed.rows[m.rowIndex]
+    if m.loaded.DoesExist(row.id) then
+        openRow()
+    else
+        startRowLoad(row)
+    end if
+end sub
+
+sub startRowLoad(row as object)
+    if m.rowLoading <> "" then return
+    m.rowLoading = row.id
+    m.subtitle.text = "Abrindo " + row.name + "..."
+    m.rowTask = CreateObject("roSGNode", "ApiTask")
+    m.rowTask.observeField("result", "onRowLoaded")
+    m.rowTask.observeField("error", "onRowError")
+    m.rowTask.mode = "row"
+    m.rowTask.body = { id: row.id, v: row.v }
+    m.rowTask.control = "RUN"
+end sub
+
+sub onRowLoaded()
+    data = m.rowTask.result
+    id = m.rowLoading
+    m.rowLoading = ""
+    idx = -1
+    for i = 0 to m.feed.rows.Count() - 1
+        if m.feed.rows[i].id = id then idx = i
+    end for
+    if idx < 0 then return
+    row = m.feed.rows[idx]
+    items = data.row.items
+    prepItems(items)
+    row.items = items
+    for each k in ["totals", "cats", "icon"]
+        if data.row.DoesExist(k) then row[k] = data.row[k]
+    end for
+    for each k in data.details
+        m.feed.details[k] = data.details[k]
+    end for
+    m.loaded[id] = true
+    flushPosters()
+    if m.screen = "home" then
+        m.subtitle.text = statusText()
+        m.rowIndex = idx
+        openRow()
+    end if
+end sub
+
+sub onRowError()
+    m.rowLoading = ""
+    m.subtitle.text = m.rowTask.error
+end sub
+
+sub openRow()
     resetOptions()
     ' padrão: maior nota do IMDb primeiro (novidades seguem da mais recente para a mais antiga)
     rid = m.feed.rows[m.rowIndex].id
@@ -603,7 +703,7 @@ end sub
 
 sub showDetails(it as object)
     m.current = it
-    m.dPoster.uri = it.poster.Replace("UX220", "UX500").Replace("UX300", "UX500")
+    m.dPoster.uri = it.posterWeb.Replace("UX220", "UX500")
     m.dTitle.text = it.title
     meta = []
     if it.year <> "" then meta.Push(it.year)
@@ -922,10 +1022,34 @@ sub onSearchButton()
     if kd.buttonSelected = 0 then q = LCase(kd.text).Trim()
     kd.close = true
     if q = "" then return
+    m.searchQ = q
+    m.subtitle.text = "Buscando " + Chr(34) + q + Chr(34) + "..."
+    m.searchTask = CreateObject("roSGNode", "ApiTask")
+    m.searchTask.observeField("result", "onSearchResult")
+    m.searchTask.observeField("error", "onSearchError")
+    m.searchTask.mode = "search"
+    m.searchTask.body = { q: q }
+    m.searchTask.control = "RUN"
+end sub
+
+sub onSearchResult()
+    data = m.searchTask.result
+    items = data.items
+    prepItems(items)
+    for each k in data.details
+        m.feed.details[k] = data.details[k]
+    end for
+    flushPosters()
+    showSearch(items)
+end sub
+
+' Sem o PC: procura só nas listas que já foram abertas nesta sessão.
+sub onSearchError()
+    q = m.searchQ
     results = []
     seen = {}
     for each row in m.feed.rows
-        if row.id <> "search" then
+        if row.id <> "search" and row.items <> invalid then
             for each it in row.items
                 if not seen.DoesExist(it.id) and (Instr(1, it.sortTitle, q) > 0 or Instr(1, it.orig, q) > 0) then
                     seen[it.id] = true
@@ -937,6 +1061,13 @@ sub onSearchButton()
             end for
         end if
     end for
+    showSearch(results)
+end sub
+
+sub showSearch(results as object)
+    q = m.searchQ
+    if m.screen <> "home" then return
+    m.subtitle.text = statusText()
     removeSearchRow()
     m.feed.rows.Push({ id: "search", name: "Busca: " + q, total: results.Count(), award: false, items: results })
     m.listKey = ""

@@ -1,15 +1,21 @@
 ' Conversa com o servidor do PC fora da thread de interface.
-'   mode = "cached": lê os últimos dados guardados no Roku (abre o canal na hora)
-'   mode = "feed":   busca dados novos no PC e guarda uma cópia
-'   mode = "play":   pede ao PC para abrir o título; sem PC, abre sozinho quando dá
+'   mode = "cached":  lê a tela inicial guardada no Roku (abre o canal na hora)
+'   mode = "feed":    busca a tela inicial no PC e guarda uma cópia
+'   mode = "row":     uma lista: da cópia guardada se ainda vale, senão do PC
+'   mode = "search":  busca no PC em todas as listas
+'   mode = "posters": guarda as capas no espaço do canal, para as próximas aberturas
+'   mode = "play":    pede ao PC para abrir o título; sem PC, abre sozinho quando dá
 
 sub init()
     m.top.functionName = "doWork"
 end sub
 
 sub doWork()
-    if m.top.mode = "cached" then
-        text = ReadAsciiFile(cachePath())
+    mode = m.top.mode
+    if mode = "cached" then
+        DeleteFile("cachefs:/feed.json")          ' cópia inteira dos builds 8-11, não é mais usada
+        DeleteFile("cachefs:/feed.version")
+        text = ReadAsciiFile(homePath())
         data = invalid
         if text <> "" then data = ParseJson(text)
         if data = invalid then
@@ -17,24 +23,38 @@ sub doWork()
         else
             m.top.result = data
         end if
-    else if m.top.mode = "feed" then
+    else if mode = "feed" then
         ' manda a versão da cópia guardada: se nada mudou, o PC responde só {same: true}
         have = ""
-        if m.top.body = invalid or m.top.body.full <> true then have = ReadAsciiFile(versionPath())
-        text = request("GET", serverUrl() + "/api/roku?fmt=3&v=" + have, "", 25000)
-        if text = invalid and relocateServer() then text = request("GET", serverUrl() + "/api/roku?fmt=3&v=" + have, "", 25000)
+        if m.top.body = invalid or m.top.body.full <> true then have = ReadAsciiFile(homeVersionPath())
+        text = request("GET", serverUrl() + "/api/roku?fmt=4&v=" + have, "", 20000)
+        if text = invalid and relocateServer() then text = request("GET", serverUrl() + "/api/roku?fmt=4&v=" + have, "", 20000)
         data = invalid
         if text <> invalid then data = ParseJson(text)
         if data = invalid then
             m.top.error = "Não consegui falar com o computador em " + serverUrl() + "."
         else
             if not data.DoesExist("same") then
-                WriteAsciiFile(cachePath(), text)
-                WriteAsciiFile(versionPath(), data.version)
+                WriteAsciiFile(homePath(), text)
+                WriteAsciiFile(homeVersionPath(), data.version)
             end if
             m.top.result = data
         end if
-    else if m.top.mode = "play" then
+    else if mode = "row" then
+        loadRow(m.top.body.id, m.top.body.v)
+    else if mode = "search" then
+        xfer = CreateObject("roUrlTransfer")
+        text = request("GET", serverUrl() + "/api/roku/search?q=" + xfer.Escape(m.top.body.q), "", 15000)
+        data = invalid
+        if text <> invalid then data = ParseJson(text)
+        if data = invalid then
+            m.top.error = "sem conexão"
+        else
+            m.top.result = data
+        end if
+    else if mode = "posters" then
+        savePosters(m.top.body.codes)
+    else if mode = "play" then
         body = m.top.body
         text = request("POST", serverUrl() + "/api/play_title", FormatJson({ id: body.id, service: body.service }), 8000)
         if text = invalid and relocateServer() then text = request("POST", serverUrl() + "/api/play_title", FormatJson({ id: body.id, service: body.service }), 8000)
@@ -49,6 +69,56 @@ sub doWork()
     end if
 end sub
 
+' Uma lista. A tela inicial diz qual versão de cada lista é a atual (want): se a cópia
+' guardada é dessa versão, nem pergunta ao PC. Sem PC, usa a cópia que tiver.
+sub loadRow(id as string, want as string)
+    path = rowPath(id)
+    cached = invalid
+    text = ReadAsciiFile(path)
+    if text <> "" then cached = ParseJson(text)
+    if cached <> invalid and not (cached.DoesExist("row") and cached.DoesExist("v")) then cached = invalid
+    if cached <> invalid and cached.v = want then
+        m.top.result = cached
+        return
+    end if
+    have = ""
+    if cached <> invalid then have = cached.v
+    xfer = CreateObject("roUrlTransfer")
+    url = serverUrl() + "/api/roku/list?id=" + xfer.Escape(id) + "&v=" + have
+    text = request("GET", url, "", 20000)
+    data = invalid
+    if text <> invalid then data = ParseJson(text)
+    if data <> invalid and data.DoesExist("same") and cached <> invalid then
+        m.top.result = cached
+    else if data <> invalid and data.DoesExist("row") then
+        WriteAsciiFile(path, text)
+        m.top.result = data
+    else if cached <> invalid then
+        m.top.result = cached
+    else
+        m.top.error = "Não consegui carregar esta lista do computador."
+    end if
+end sub
+
+' Baixa as capas que ainda não estão guardadas (no máximo 300 por vez).
+sub savePosters(codes as object)
+    fs = CreateObject("roFileSystem")
+    if not fs.Exists("cachefs:/p") then fs.CreateDirectory("cachefs:/p")
+    done = []
+    xfer = CreateObject("roUrlTransfer")
+    for each code in codes
+        if done.Count() >= 300 then exit for
+        file = posterFile(code)
+        if not fs.Exists(file) then
+            xfer.SetUrl(posterWeb(code))
+            if xfer.GetToFile(file) = 200 then done.Push(code)
+        else
+            done.Push(code)
+        end if
+    end for
+    m.top.result = { codes: done }
+end sub
+
 ' O PC não respondeu no endereço conhecido: procura na rede e guarda se achar em outro.
 function relocateServer() as boolean
     found = findServer()
@@ -57,12 +127,16 @@ function relocateServer() as boolean
     return true
 end function
 
-function cachePath() as string
-    return "cachefs:/feed.json"
+function homePath() as string
+    return "cachefs:/home.json"
 end function
 
-function versionPath() as string
-    return "cachefs:/feed.version"
+function homeVersionPath() as string
+    return "cachefs:/home.version"
+end function
+
+function rowPath(id as string) as string
+    return "cachefs:/row_" + id.Replace(":", "_") + ".json"
 end function
 
 ' Requisição com tempo-limite; devolve o corpo ou invalid.

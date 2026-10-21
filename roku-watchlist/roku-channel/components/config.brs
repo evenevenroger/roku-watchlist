@@ -62,3 +62,14 @@ function findServer() as string
     end for
     return ""
 end function
+
+' ---------- capas ----------
+' O servidor manda só o código da imagem do IMDb; a capa guardada fica em cachefs:/p.
+function posterWeb(code as string) as string
+    if code = "" or Left(code, 4) = "http" then return code
+    return "https://m.media-amazon.com/images/M/" + code + "._V1_QL75_UX220_.jpg"
+end function
+
+function posterFile(code as string) as string
+    return "cachefs:/p/" + code.Replace("@", "_") + ".jpg"
+end function
