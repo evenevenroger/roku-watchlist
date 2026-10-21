@@ -27,6 +27,25 @@ AWARDS = {
         ("Prêmio do Júri", lambda t, c, y=0: t == "Jury Prize" and c == ""),
         ("Un Certain Regard", lambda t, c, y=0: t == "Un Certain Regard Award"),
     ]),
+    # Berlim: o 2º prêmio se chamava "Special Jury Prize" até 1999; depois, "Jury Grand Prix"
+    # / "Grand Jury Prize". O "Jury Prize" existe em 2000-01 e de 2021 em diante.
+    "berlim": ("ev0000091", True, [
+        ("Urso de Ouro", lambda t, c, y=0: t == "Golden Berlin Bear" and c in (
+            "", "Best Film", "Competition", "International Jury", "Best Drama", "Best Comedy",
+            "Best Crime or Adventure", "Best Musical")),
+        ("Grande Prêmio do Júri", lambda t, c, y=0: t == "Silver Berlin Bear" and (
+            c in ("Jury Grand Prix", "Grand Jury Prize", "Special Prize of the Jury")
+            or (c == "Special Jury Prize" and y and y <= 1999))),
+        ("Prêmio do Júri", lambda t, c, y=0: t == "Silver Berlin Bear" and (
+            c == "Jury Prize" or (c == "Special Jury Prize" and y and y >= 2000))),
+    ]),
+    # Veneza: "Grand Special Jury Prize" de 1983 a 2018 e "Silver Lion - Grand Jury Prize" depois.
+    "veneza": ("ev0000681", True, [
+        ("Leão de Ouro", lambda t, c, y=0: t == "Golden Lion" and c in ("", "Best Film")),
+        ("Grande Prêmio do Júri", lambda t, c, y=0: t == "Grand Special Jury Prize" or (
+            t == "Silver Lion" and c == "Grand Jury Prize")),
+        ("Prêmio Especial do Júri", lambda t, c, y=0: t == "Special Jury Prize" and c == ""),
+    ]),
 }
 def festival_top(year):
     return bool(year) and (year <= 1954 or 1964 <= year <= 1974)
@@ -76,4 +95,6 @@ def fetch_awards(group):
     return out
 
 
-AWARD_NAMES = {"oscar": "Oscar", "cannes": "Cannes"}
+AWARD_NAMES = {"oscar": "Oscar", "cannes": "Cannes", "veneza": "Veneza", "berlim": "Berlim"}
+# ícone da faixa do pôster de cada prêmio (roku-channel/images/<ícone>_dark|_gold.png)
+AWARD_ICONS = {"oscar": "trophy", "cannes": "palm", "veneza": "medal", "berlim": "medal"}

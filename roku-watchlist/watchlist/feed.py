@@ -5,7 +5,7 @@ import zipfile
 
 import time
 
-from .awards import AWARD_NAMES, AWARDS
+from .awards import AWARD_ICONS, AWARD_NAMES, AWARDS
 from .common import CHANNEL_DIR, CONFIG, lan_ip
 from .data import build_payload
 
@@ -34,10 +34,10 @@ def award_fields(t, list_id):
                                    for y, v in sorted(by_year.items(), reverse=True))
     # faixa do pé do pôster nas listas comuns: o prêmio mais importante do filme
     strip = {"t": "", "w": False, "i": ""}
-    for g in ("oscar", "cannes"):
+    for g in AWARD_NAMES:                       # ordem de importância: Oscar, Cannes, Veneza, Berlim
         won = [a for a in aw.get(g, []) if a["w"]]
         if won:
-            strip = {"t": won[0]["c"], "w": True, "i": "palm" if g == "cannes" else "trophy"}
+            strip = {"t": won[0]["c"], "w": True, "i": AWARD_ICONS[g]}
             break
     else:
         if aw.get("oscar"):
@@ -126,6 +126,7 @@ def roku_feed():
                         totals[k] = totals.get(k, 0) + 1
                 row["totals"] = totals
                 row["cats"] = [c for c, _ in AWARDS[group][2]]
+                row["icon"] = AWARD_ICONS[group]
             rows.append(row)
     # novidades: o que entrou nos seus serviços nas últimas semanas, de qualquer lista
     cutoff = time.time() - NEW_DAYS * 86400

@@ -775,7 +775,7 @@ sub buildAwardRows(year as string)
         rowNode.title = row.name + " " + year + "      " + picked.Count().ToStr() + " de " + total.ToStr() + " premiados nos seus serviços"
         items = []
         for each p in picked
-            addPosterNode(rowNode, p.it, p.it.year + "  ·  " + p.it.services.Join(" · "), { t: p.c, w: true, i: "palm" })
+            addPosterNode(rowNode, p.it, p.it.year + "  ·  " + p.it.services.Join(" · "), { t: p.c, w: true, i: row.icon })
             items.Push(p.it)
         end for
         m.awardView.Push(items)
