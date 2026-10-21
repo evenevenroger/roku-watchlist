@@ -4,66 +4,99 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0e0f13">
-<title>Watchlist → Roku</title>
+<link rel="apple-touch-icon" href="/img/icon_hd.png">
+<title>Minha Watchlist</title>
 <style>
-:root{--bg:#0e0f13;--panel:#171920;--panel2:#20232c;--line:#2b2f3a;--text:#eceef3;--mute:#9aa0ad;--accent:#6c3ff5;--ok:#2fbf71;--err:#e5484d;--r:12px}
+/* Mesmas cores e peças do canal do Roku */
+:root{--bg:#0e0f13;--panel:#171920;--panel2:#20232c;--line:#2b2f3a;--text:#eceef3;--mute:#9aa0ad;
+  --accent:#6c3ff5;--gold:#e3c16f;--ink:#2a2008;--err:#e5484d;--r:10px}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 button,select,input{font:inherit;color:inherit}
-header{position:sticky;top:0;z-index:5;background:rgba(14,15,19,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:10px 16px}
-.top{display:flex;align-items:center;gap:10px}
-h1{font-size:17px;margin:0;font-weight:650;letter-spacing:.2px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-h1 span{color:var(--accent)}
-.btn{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;cursor:pointer;white-space:nowrap}
-.btn:hover{border-color:#3d4250}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-.controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-.controls select,.controls input{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0}
-.controls input{flex:1 1 180px}
-.controls select{flex:0 1 auto;max-width:100%}
-.chips{display:flex;gap:6px;overflow-x:auto;padding:10px 0 2px;scrollbar-width:none}
-.chips::-webkit-scrollbar{display:none}
-.chip{flex:none;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:5px 11px;font-size:13px;cursor:pointer;color:var(--mute)}
-.chip.on{color:#fff;border-color:transparent;background:var(--c,var(--accent))}
-.toggle{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--mute);cursor:pointer;user-select:none}
-.toggle input{accent-color:var(--accent);width:16px;height:16px}
-.status{font-size:12px;color:var(--mute);padding:6px 16px 0}
-.bar{height:3px;background:var(--line);border-radius:3px;margin-top:4px;overflow:hidden}
+header{position:sticky;top:0;z-index:5;background:rgba(14,15,19,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:10px 16px}
+.top{display:flex;align-items:center;gap:8px}
+.back{background:none;border:0;color:var(--text);font-size:24px;line-height:1;padding:0 6px 0 0;cursor:pointer}
+h1{font-size:18px;margin:0;font-weight:700;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btn{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:7px 11px;cursor:pointer;white-space:nowrap;font-size:14px}
+.sub{color:var(--mute);font-size:13px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.search{display:flex;gap:8px;margin-top:10px}
+.search input{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.bar{height:3px;background:var(--line);border-radius:3px;margin-top:6px;overflow:hidden}
 .bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .4s}
 main{padding:14px 16px 90px}
-.count{color:var(--mute);font-size:13px;margin:0 0 10px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:14px}
-@media (max-width:420px){.grid{grid-template-columns:repeat(3,1fr);gap:10px}}
-@media (max-width:600px){header{position:static}}
-.card .pos img{width:100%;height:100%;object-fit:cover;display:block}
-.card{cursor:pointer;border-radius:var(--r);overflow:hidden;background:var(--panel);position:relative;transition:transform .15s}
-.card:hover{transform:translateY(-2px)}
-.card .pos{aspect-ratio:2/3;background:#22252e center/cover no-repeat;display:flex;align-items:flex-end}
-.card .noimg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding:8px;text-align:center;color:var(--mute);font-size:12px}
-.card .rt{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.72);border-radius:6px;padding:1px 6px;font-size:12px;font-weight:600;color:#f5c518}
-.card .svc{position:absolute;bottom:6px;left:6px;right:6px;display:flex;flex-wrap:wrap;gap:3px}
-.dot{font-size:10px;font-weight:700;border-radius:5px;padding:1px 5px;background:var(--c);color:#fff;box-shadow:0 1px 3px rgba(0,0,0,.5)}
-.card .meta{padding:6px 8px 8px}
-.card .t{font-size:13px;font-weight:600;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.card .y{font-size:12px;color:var(--mute)}
 .empty{color:var(--mute);text-align:center;padding:60px 10px}
-/* detalhe */
+.info{color:var(--gold);font-weight:600;font-size:13px;margin:0 0 12px;min-height:18px}
+
+/* tela inicial: cartões das listas */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.lcard{background:var(--panel);border-radius:12px;padding:10px;cursor:pointer;border:2px solid transparent}
+.lcard:hover{border-color:var(--accent)}
+.lcard .covers{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.lcard .covers div{aspect-ratio:2/3;border-radius:6px;background:#22252e center/cover no-repeat}
+.lcard .n{font-weight:700;margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lcard .n{font-size:14px}
+.lcard .c{color:var(--mute);font-size:12px;line-height:1.3}
+
+/* pôster igual ao do canal: IMDb, minha nota, RT e até duas tarjas de prêmio */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px}
+@media (max-width:440px){.grid{grid-template-columns:repeat(3,1fr);gap:9px}}
+.p{cursor:pointer;min-width:0}
+.pos{position:relative;aspect-ratio:2/3;border-radius:6px;overflow:hidden;background:#22252e;container-type:inline-size}
+.pos img{width:100%;height:100%;object-fit:cover;display:block}
+.chip{position:absolute;top:3.6cqw;height:13.6cqw;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:9cqw;border-radius:2cqw}
+.chip.imdb{left:3.6cqw;width:24.5cqw;background:rgba(0,0,0,.42);color:#f5c518}
+.chip.mine{right:3.6cqw;width:31cqw;background:rgba(108,63,245,.55);color:#fff}
+.rt{position:absolute;left:3.6cqw;width:70cqw;height:13.6cqw;background:rgba(0,0,0,.42);border-radius:2cqw;display:flex;align-items:center;gap:1.5cqw;padding:0 2.5cqw;font-weight:700;font-size:8.6cqw;color:#fff}
+.rt img{width:9cqw;height:9cqw}
+.rt span{flex:1}
+.strip{position:absolute;left:0;right:0;height:14.5cqw;display:flex;align-items:center;gap:2.6cqw;padding:0 3.6cqw;font-weight:700;font-size:6.8cqw;text-transform:uppercase;white-space:nowrap;overflow:hidden}
+.strip img{width:8.2cqw;height:8.2cqw;flex:none}
+.strip span{overflow:hidden;text-overflow:ellipsis}
+.strip.won{background:var(--gold);color:var(--ink)}
+.strip.nom{background:rgba(14,15,19,.88);color:var(--gold);border-top:1px solid var(--gold)}
+.p .t{font-size:13px;font-weight:600;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p .y{font-size:12px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* festivais: anos no alto, fileiras embaixo */
+.years{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
+.years::-webkit-scrollbar{display:none}
+.yr{flex:none;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 12px;font-weight:700;color:var(--mute);cursor:pointer}
+.yr small{font-weight:500;margin-left:6px;opacity:.8}
+.yr.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.arow{margin-bottom:18px}
+.arow h3{font-size:14px;margin:0 0 8px;color:#cfd3dc}
+.arow h3 small{color:var(--mute);font-weight:500;margin-left:8px}
+.scroller{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(105px,30%);gap:9px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.scroller::-webkit-scrollbar{display:none}
+
+/* painel de ordenar e filtrar */
 .sheet{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center}
 .sheet.open{display:flex}
-.sheet .box{background:var(--panel);width:min(720px,100%);max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
-@media (min-width:760px){.sheet{align-items:center}.sheet .box{border-radius:18px}}
+.box{background:var(--panel);width:min(720px,100%);max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
+@media (min-width:760px){.sheet{align-items:center}.box{border-radius:18px}}
+.box h2{margin:0 0 12px;font-size:19px}
+.close{float:right;background:none;border:0;color:var(--mute);font-size:26px;line-height:1;cursor:pointer;padding:0 4px}
+.opt{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.opt label{font-size:13px;color:var(--mute)}
+.opt select{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 10px}
+.row2{display:flex;gap:8px;margin-top:6px}
+.row2 .btn{flex:1;padding:11px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:650}
+
+/* ficha */
 .d-head{display:flex;gap:14px}
-.d-head img{width:110px;border-radius:10px;flex:none;align-self:flex-start}
+.d-head img{width:120px;border-radius:8px;flex:none;align-self:flex-start}
 .d-head h2{margin:0 0 4px;font-size:20px;line-height:1.2}
-.d-sub{color:var(--mute);font-size:13px}
+.d-sub{color:var(--mute);font-size:13px;margin-top:2px}
+.d-aw{color:var(--gold);font-size:13px;margin-top:8px}
 .d-plot{margin:12px 0;color:#cfd3dc;font-size:14px}
 .d-actions{display:flex;flex-direction:column;gap:8px;margin-top:12px}
-.play{display:flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;padding:13px;font-weight:650;color:#fff;background:var(--c);cursor:pointer;font-size:15px}
+.play{border:0;border-radius:12px;padding:13px;font-weight:650;color:#fff;background:var(--c);cursor:pointer;font-size:15px}
 .play:disabled{opacity:.6}
-.alt{font-size:13px;color:var(--mute);margin-top:6px}
 .links{display:flex;gap:14px;margin-top:14px;font-size:13px}
 .links a{color:var(--mute)}
-.close{float:right;background:none;border:0;color:var(--mute);font-size:26px;line-height:1;cursor:pointer;padding:0 4px}
+
 /* controle remoto */
 .remote{position:fixed;right:16px;bottom:16px;z-index:15}
 .fab{width:54px;height:54px;border-radius:50%;background:var(--accent);border:0;color:#fff;font-size:22px;box-shadow:0 6px 18px rgba(0,0,0,.5);cursor:pointer}
@@ -73,7 +106,7 @@ main{padding:14px 16px 90px}
 .pad button{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 0;cursor:pointer;font-size:15px}
 .pad button.ok{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
 .pad .sep{height:8px}
-.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(120px);background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 14px;z-index:30;transition:transform .25s;max-width:calc(100% - 32px);font-size:14px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(140px);background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 14px;z-index:30;transition:transform .25s;max-width:calc(100% - 32px);font-size:14px}
 .toast.show{transform:translateX(-50%) translateY(0)}
 .toast.err{border-color:var(--err)}
 </style>
@@ -81,38 +114,16 @@ main{padding:14px 16px 90px}
 <body>
 <header>
   <div class="top">
-    <h1>Watchlist <span>→</span> Roku</h1>
-    <button class="btn" id="shuffle" title="Sortear um título da seleção">🎲 Sortear</button>
+    <button class="back" id="back" hidden aria-label="Voltar">‹</button>
+    <h1 id="title">Minha Watchlist</h1>
+    <button class="btn" id="filters" hidden>Ordenar e filtrar</button>
+    <button class="btn" id="shuffle" hidden title="Sortear um título">🎲</button>
     <button class="btn" id="sync" title="Atualizar listas e disponibilidade">↻</button>
   </div>
-  <div class="controls">
-    <select id="list"></select>
-    <select id="type">
-      <option value="all">Filmes e séries</option>
-      <option value="movie">Só filmes</option>
-      <option value="series">Só séries</option>
-    </select>
-    <select id="sort">
-      <option value="pos">Ordem da lista</option>
-      <option value="rating" selected>Nota IMDb</option>
-      <option value="mine">Minha nota</option>
-      <option value="lang">Idioma</option>
-      <option value="new">Mais recentes</option>
-      <option value="old">Mais antigos</option>
-      <option value="short">Mais curtos</option>
-      <option value="title">Título A–Z</option>
-    </select>
-    <select id="lang"><option value="">Todos os idiomas</option></select>
-    <input id="q" type="search" placeholder="Buscar título…">
-  </div>
-  <div class="chips" id="chips"></div>
-  <label class="toggle"><input type="checkbox" id="mineOnly" checked> Só o que está nos meus serviços</label>
+  <div class="sub" id="sub"></div>
+  <form class="search" id="searchForm"><input id="q" type="search" placeholder="Buscar título em todas as listas…" enterkeyhint="search"></form>
 </header>
-<div class="status" id="status"></div>
-<main>
-  <p class="count" id="count"></p>
-  <div class="grid" id="grid"></div>
-</main>
+<main id="main"><div class="empty">Carregando suas listas…</div></main>
 
 <div class="sheet" id="sheet"><div class="box" id="box"></div></div>
 
@@ -134,129 +145,231 @@ main{padding:14px 16px 90px}
 <div class="toast" id="toast"></div>
 
 <script>
+// Mesmos dados do canal do Roku: /api/roku?fmt=4 (cartões), /api/roku/list (uma lista), /api/roku/search.
 const COLORS={"Netflix":"#e50914","Prime Video":"#1399ff","Universal+":"#4b5bdc","Filmelier":"#d9822b","HBO Max":"#5b2bd8","Disney+":"#113ccf","Apple TV":"#55575e","Paramount+":"#0064ff"};
 const color=s=>COLORS[s]||"#444a57";
 const $=id=>document.getElementById(id);
-const store={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
-let DATA=null, byId={}, selSvc=new Set(store.get("svc",[]));
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const POSTER=(code,w)=>!code?"":code.startsWith("http")?code:`https://m.media-amazon.com/images/M/${code}._V1_QL75_UX${w||300}_.jpg`;
+const SORTS=[["pos","Ordem da lista"],["r","Nota IMDb"],["mine","Minha nota"],["lang","Idioma"],["new","Mais recentes"],["old","Mais antigos"],["short","Mais curtos"],["title","Título (A-Z)"],["ay","Ano do prêmio"]];
+const KINDS=["Filmes e séries","Só filmes","Só séries"], DURS=["Qualquer duração","Até 1h40","Até 2h","Mais de 2h"], RESULTS=["Indicados e vencedores","Só vencedores","Só indicados"];
+
+let HOME=null, LISTS={}, DET={}, SEARCH=null, opts={}, pollWas=false;
 
 function toast(msg,err,ms){const t=$("toast");t.textContent=msg;t.className="toast show"+(err?" err":"");clearTimeout(t._h);t._h=setTimeout(()=>t.className="toast",ms||3500)}
 async function api(path,body){const r=await fetch(path,body?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}:{});return r.json()}
+function fmtMin(m){if(!m)return"";const h=Math.floor(m/60),mm=m%60;return h?`${h}h${String(mm).padStart(2,"0")}`:`${mm} min`}
 
-async function load(){
-  DATA=await api("/api/data"); byId={}; DATA.titles.forEach(t=>byId[t.id]=t);
-  const L=$("list"), cur=store.get("list","watchlist");
-  L.innerHTML=`<option value="__all">Todas as listas</option>`+DATA.lists.map(l=>`<option value="${l.id}">${esc(l.name.trim())} (${l.items.length})</option>`).join("");
-  L.value=[...L.options].some(o=>o.value===cur)?cur:"watchlist";
-  $("chips").innerHTML=DATA.services.map(s=>`<button class="chip${selSvc.has(s)?" on":""}" data-s="${esc(s)}" style="--c:${color(s)}">${esc(s)}</button>`).join("");
-  const lc={}; DATA.titles.forEach(t=>{if(t.lang)lc[t.lang]=(lc[t.lang]||0)+1});
-  $("lang").innerHTML=`<option value="">Todos os idiomas</option>`+Object.entries(lc).sort((a,b)=>b[1]-a[1]).map(([l,n])=>`<option value="${esc(l)}">${esc(l)} (${n})</option>`).join("");
-  ["type","sort","lang"].forEach(k=>$(k).value=store.get(k,$(k).value));
-  $("mineOnly").checked=store.get("mine",true);
-  render();
+// ---------- dados ----------
+async function loadHome(){HOME=await api("/api/roku?fmt=4");LISTS={};route()}
+async function loadList(id){
+  const row=HOME.rows.find(r=>r.id===id); if(!row)return null;
+  if(LISTS[id]&&LISTS[id].v===row.v)return LISTS[id].row;
+  const d=await api("/api/roku/list?id="+encodeURIComponent(id));
+  if(!d.row)return null;
+  Object.assign(DET,d.details||{}); LISTS[id]={v:d.v,row:d.row}; return d.row;
+}
+function statusText(){const s=HOME&&HOME.status;if(!s)return"";return[s.synced?`Atualizado em ${s.synced}`:"",s.incomplete?"ainda consultando alguns títulos":"",s.error?`Última atualização falhou: ${s.error}`:""].filter(Boolean).join(" · ")}
+
+// ---------- navegação (o botão voltar do celular funciona) ----------
+function go(hash){if(location.hash===hash)route();else location.hash=hash}
+window.onhashchange=route;
+async function route(){
+  if(!HOME)return;
+  const h=decodeURIComponent(location.hash.slice(1));
+  $("sheet").classList.remove("open");
+  if(h.startsWith("l/")){
+    const id=h.slice(2), meta=HOME.rows.find(r=>r.id===id);
+    if(!meta)return go("");
+    header(meta.name,"Abrindo…",true);
+    const row=await loadList(id); if(!row){toast("Não consegui abrir esta lista.",true);return}
+    if(!opts[id])opts[id]=defaults(id);
+    row.award?showAwards(row):showList(row);
+  }else if(h.startsWith("s/")&&SEARCH){
+    if(!opts.search)opts.search=defaults("search");
+    showList({id:"search",name:`Busca: ${SEARCH.q}`,items:SEARCH.items,total:SEARCH.items.length,award:false});
+  }else showHome();
+}
+function header(title,sub,inner){
+  $("title").textContent=title; $("sub").textContent=sub||"";
+  $("back").hidden=!inner; $("filters").hidden=true; $("shuffle").hidden=!inner;
+  $("searchForm").hidden=!!inner;
+}
+function defaults(id){return{sort:id==="new"||id==="recent"?0:1,lang:"",service:"",genre:"",director:"",kind:0,dur:0,acat:"",ayear:"",ares:0}}
+
+// ---------- tela inicial ----------
+function showHome(){
+  header("Minha Watchlist",statusText(),false);
+  $("main").innerHTML=`<div class="cards">${HOME.rows.map(r=>{
+    const txt=r.id==="new"?`${r.count} títulos nas últimas 3 semanas`:r.id==="recent"?`${r.count} títulos que você abriu`:`${r.count} para assistir agora · ${r.total} na lista`;
+    const cv=[0,1,2].map(i=>`<div style="background-image:url('${POSTER((r.covers||[])[i],220)}')"></div>`).join("");
+    return`<div class="lcard" data-id="${esc(r.id)}"><div class="covers">${cv}</div><div class="n">${esc(r.name)}</div><div class="c">${txt}</div></div>`}).join("")}</div>`;
+  current=[];
 }
 
-const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const isSeries=t=>/series|tvMini|tvSeries/i.test(t.type||"");
+// ---------- pôster (igual ao PosterItem do canal) ----------
+let current=[];   // títulos na tela, para a ficha e o sorteio
+function poster(it,strips,line){
+  current.push(it);
+  const mine=it.mine>0?`<div class="chip mine">Eu ${it.mine}</div>`:"";
+  const imdb=it.rating?`<div class="chip imdb">${esc(it.rating)}</div>`:"";
+  const n=strips.length;
+  const st=strips.map((s,i)=>`<div class="strip ${s.w?"won":"nom"}" style="bottom:${i*14.5}cqw"><img src="/img/${s.i}_${s.w?"dark":"gold"}.png" alt=""><span>${esc(s.t)}</span></div>`).join("");
+  const rt=it.rtC||it.rtA?`<div class="rt" style="bottom:${n?n*14.5+1.8:3.6}cqw"><img src="/img/rt_tomato.png" alt=""><span>${it.rtC?it.rtC+"%":"-"}</span><img src="/img/rt_popcorn.png" alt=""><span>${it.rtA?it.rtA+"%":"-"}</span></div>`:"";
+  return`<div class="p" data-n="${current.length-1}"><div class="pos"><img loading="lazy" src="${POSTER(it.poster)}" alt="">${imdb}${mine}${rt}${st}</div>
+    <div class="t">${esc(it.title)}</div><div class="y">${esc(line)}</div></div>`;
+}
+function awardStrips(first,it,skip){const s=first?[first]:[];for(const x of it.strips||[])if(s.length<2&&x.w&&x.i!==skip)s.push(x);return s}
+function focusInfo(it){const g=(it.genreList||[]).slice(0,3).join(", ");return[it.directorList&&it.directorList.length?"Direção: "+it.directorList.join(", "):"",fmtMin(it.runtime),g,it.lang].filter(Boolean).join(" · ")}
 
-function current(){
-  if(!DATA)return[];
-  const lid=$("list").value, q=$("q").value.trim().toLowerCase(), type=$("type").value, mine=$("mineOnly").checked;
-  let ids;
-  if(lid==="__all"){const s=new Set();DATA.lists.forEach(l=>l.items.forEach(i=>s.add(i)));ids=[...s]}
-  else ids=(DATA.lists.find(l=>l.id===lid)||{items:[]}).items;
-  let arr=ids.map((id,i)=>({...byId[id],_pos:i})).filter(t=>t.id);
-  if(type==="movie")arr=arr.filter(t=>!isSeries(t)); if(type==="series")arr=arr.filter(isSeries);
-  if(q)arr=arr.filter(t=>(t.title||"").toLowerCase().includes(q)||(t.original||"").toLowerCase().includes(q));
-  const lang=$("lang").value; if(lang)arr=arr.filter(t=>t.lang===lang);
-  if(mine)arr=arr.filter(t=>t.mine.length);
-  if(selSvc.size)arr=arr.filter(t=>t.mine.some(m=>selSvc.has(m.service)));
-  const s=$("sort").value, by={
-    rating:(a,b)=>(b.rating||0)-(a.rating||0), new:(a,b)=>(b.year||0)-(a.year||0), old:(a,b)=>(a.year||9999)-(b.year||9999),
-    short:(a,b)=>(a.runtime||999)-(b.runtime||999), title:(a,b)=>(a.title||"").localeCompare(b.title||"","pt"), pos:(a,b)=>a._pos-b._pos,
-    mine:(a,b)=>(b.my_rating||0)-(a.my_rating||0)||(b.rating||0)-(a.rating||0),
-    lang:(a,b)=>(a.lang||"~").localeCompare(b.lang||"~","pt")||(b.rating||0)-(a.rating||0)};
-  return arr.sort(by[s]);
+// ---------- lista: ordenar e filtrar como no canal ----------
+function passes(it,o){
+  if(o.lang&&it.lang!==o.lang)return false;
+  if(o.service&&!it.services.includes(o.service))return false;
+  if(o.genre&&!(it.genreList||[]).includes(o.genre))return false;
+  if(o.director&&!(it.directorList||[]).includes(o.director))return false;
+  if(o.kind===1&&it.series||o.kind===2&&!it.series)return false;
+  if(o.dur===1&&(!it.runtime||it.runtime>100)||o.dur===2&&(!it.runtime||it.runtime>120)||o.dur===3&&it.runtime<=120)return false;
+  if(o.acat||o.ayear||o.ares)return(it.aw||[]).some(a=>(!o.acat||a.c===o.acat)&&(!o.ayear||a.y===o.ayear)&&(!o.ares||(o.ares===1)===a.w));
+  return true;
+}
+function sorted(items,o){
+  const v=items.slice(), k=SORTS[o.sort][0];
+  const by={pos:(a,b)=>a.pos-b.pos,r:(a,b)=>b.r-a.r,mine:(a,b)=>b.mine-a.mine||b.r-a.r,lang:(a,b)=>a.lang.localeCompare(b.lang,"pt")||b.r-a.r,
+    new:(a,b)=>b.y-a.y,old:(a,b)=>(a.y||9999)-(b.y||9999),short:(a,b)=>a.rtSort-b.rtSort,title:(a,b)=>a.title.localeCompare(b.title,"pt"),ay:(a,b)=>(b.ay||0)-(a.ay||0)};
+  return v.sort(by[k]);
+}
+let LISTROW=null;
+function showList(row){
+  LISTROW=row; const o=opts[row.id];
+  const view=sorted(row.items.filter(it=>passes(it,o)),o);
+  const f=activeFilters(o);
+  header(row.name,[`${view.length} de ${row.items.length} títulos`,`Ordem: ${SORTS[o.sort][1]}`,f].filter(Boolean).join(" · "),true);
+  $("filters").hidden=false;
+  current=[];
+  const sk=SORTS[o.sort][0];
+  $("main").innerHTML=view.length?`<div class="grid">${view.map(it=>{
+      let line=[it.year,it.services.join(" · ")].filter(Boolean).join("  ·  ");
+      if(sk==="lang")line=it.lang+"  ·  "+line; else if(sk==="short"&&it.runtime)line=fmtMin(it.runtime)+"  ·  "+line;
+      return poster(it,it.strips||[],line)}).join("")}</div>`
+    :`<div class="empty">${row.id==="search"?"Nada encontrado.":"Nada com esses filtros."}</div>`;
+}
+function activeFilters(o){return[o.lang,o.service,o.genre,o.kind?KINDS[o.kind]:"",o.dur?DURS[o.dur]:"",o.director,o.acat,o.ayear,o.ares?RESULTS[o.ares]:""].filter(Boolean).join(", ")}
+function valueCounts(items,key){
+  const t={};
+  for(const it of items){
+    if(key==="acat"||key==="ayear"){new Set((it.aw||[]).map(a=>key==="ayear"?a.y:a.c).filter(Boolean)).forEach(v=>t[v]=(t[v]||0)+1)}
+    else{const f={service:"services",genre:"genreList",director:"directorList"}[key]||key,v=it[f];(Array.isArray(v)?v:[v]).forEach(x=>{if(x)t[x]=(t[x]||0)+1})}
+  }
+  const out=Object.entries(t);
+  return key==="ayear"?out.sort((a,b)=>b[0].localeCompare(a[0])):out.sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],"pt"));
+}
+function openPanel(){
+  const row=LISTROW, o=opts[row.id];
+  const sel=(key,label,choices,cur)=>`<div class="opt"><label>${label}</label><select data-k="${key}">${choices.map(([v,l])=>`<option value="${esc(v)}"${String(v)===String(cur)?" selected":""}>${esc(l)}</option>`).join("")}</select></div>`;
+  const counts=(k,all)=>[["",all],...valueCounts(row.items,k).map(([v,n])=>[v,`${v} (${n})`])];
+  let html=`<button class="close" aria-label="Fechar">×</button><h2>Ordenar e filtrar</h2>`+sel("sort","Ordenar por",SORTS.map((s,i)=>[i,s[1]]),o.sort);
+  if(row.award)html+=sel("acat","Categoria",counts("acat","Todas"),o.acat)+sel("ayear","Ano",counts("ayear","Todos"),o.ayear)+sel("ares","Resultado",RESULTS.map((r,i)=>[i,r]),o.ares);
+  html+=sel("lang","Idioma",counts("lang","Todos"),o.lang)+sel("service","Serviço",counts("service","Todos"),o.service)+sel("genre","Gênero",counts("genre","Todos"),o.genre)
+    +sel("director","Diretor",counts("director","Todos"),o.director)+sel("kind","Tipo",KINDS.map((k,i)=>[i,k]),o.kind)+sel("dur","Duração",DURS.map((d,i)=>[i,d]),o.dur)
+    +`<div class="row2"><button class="btn" id="clear">Limpar filtros</button><button class="btn primary" id="apply">Pronto</button></div>`;
+  $("box").innerHTML=html; $("sheet").classList.add("open");
+  const num=["sort","kind","dur","ares"];
+  $("box").querySelectorAll("select").forEach(s=>s.onchange=()=>{o[s.dataset.k]=num.includes(s.dataset.k)?+s.value:s.value;showList(row)});
+  $("clear").onclick=()=>{const keep=o.sort;Object.assign(o,defaults(row.id),{sort:keep});$("sheet").classList.remove("open");showList(row)};
+  $("apply").onclick=()=>$("sheet").classList.remove("open");
+  $("box").querySelector(".close").onclick=()=>$("sheet").classList.remove("open");
 }
 
-function render(){
-  const arr=current(), g=$("grid");
-  const unchecked=DATA.titles.filter(t=>!t.checked).length;
-  $("count").textContent=`${arr.length} título${arr.length===1?"":"s"}`+(unchecked?` · ${unchecked} ainda sem consulta de disponibilidade`:"");
-  if(!arr.length){g.innerHTML=`<div class="empty" style="grid-column:1/-1">Nada por aqui com esses filtros.</div>`;return}
-  g.innerHTML=arr.slice(0,600).map(t=>`<div class="card" data-id="${t.id}">
-    <div class="pos">${t.poster?`<img loading="lazy" src="${esc(t.poster)}" alt="">`:`<div class="noimg">${esc(t.title)}</div>`}</div>
-    ${t.rating?`<span class="rt">★ ${t.rating.toFixed(1)}</span>`:""}
-    ${t.my_rating?`<span class="rt" style="left:auto;right:6px;color:#fff;background:rgba(108,63,245,.9)">Eu ${t.my_rating}</span>`:""}
-    <div class="meta"><div class="t">${esc(t.title)}</div><div class="y">${t.year||""}${isSeries(t)?" · série":""}</div>
-    <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:4px">${t.mine.map(m=>`<span class="dot" style="--c:${color(m.service)}">${esc(m.service)}</span>`).join("")}</div></div>
-  </div>`).join("");
+// ---------- festivais: anos e fileiras (igual ao canal) ----------
+let AWROW=null, AWYEAR="";
+function showAwards(row){
+  AWROW=row; $("filters").hidden=true;
+  const counts={};
+  for(const it of row.items)new Set((it.aw||[]).map(a=>a.y).filter(Boolean)).forEach(y=>counts[y]=(counts[y]||0)+1);
+  const years=Object.keys(counts).sort().reverse();
+  header(row.name,"",true);
+  if(!years.length){$("main").innerHTML=`<div class="empty">Nenhum filme desta lista está nos seus serviços.</div>`;return}
+  if(!counts[AWYEAR])AWYEAR=years[0];
+  $("main").innerHTML=`<div class="years" id="years">${years.map(y=>`<button class="yr${y===AWYEAR?" on":""}" data-y="${y}">${y}<small>${counts[y]}</small></button>`).join("")}</div><div id="arows"></div>`;
+  $("years").onclick=e=>{const b=e.target.closest(".yr");if(!b)return;AWYEAR=b.dataset.y;$("years").querySelectorAll(".yr").forEach(x=>x.classList.toggle("on",x===b));buildAwardRows()};
+  buildAwardRows();
+}
+function buildAwardRows(){
+  const row=AWROW, year=AWYEAR, out=[]; current=[];
+  const line=it=>[it.year,it.services.join(" · ")].filter(Boolean).join("  ·  ");
+  if(row.id==="award:oscar"){
+    for(const cat of row.cats){
+      const picked=[];
+      for(const it of row.items)for(const a of it.aw||[])if(a.y===year&&a.c===cat)picked.push({it,won:a.w?1:0});
+      if(!picked.length)continue;
+      picked.sort((a,b)=>b.won-a.won||b.it.r-a.it.r);
+      const total=(row.totals||{})[year+"|"+cat]||picked.length;
+      out.push(`<div class="arow"><h3>${esc(cat)}<small>${picked.length} de ${total} indicados nos seus serviços</small></h3><div class="scroller">${picked.map(p=>
+        poster(p.it,p.won?awardStrips({t:"Venceu",w:true,i:"trophy"},p.it,"trophy"):awardStrips(null,p.it,""),line(p.it))).join("")}</div></div>`);
+    }
+  }else{
+    const picked=[]; let total=0;
+    for(const cat of row.cats){total+=(row.totals||{})[year+"|"+cat]||0;for(const it of row.items)for(const a of it.aw||[])if(a.y===year&&a.c===cat)picked.push({it,c:cat})}
+    out.push(`<div class="arow"><h3>${esc(row.name)} ${year}<small>${picked.length} de ${total} premiados nos seus serviços</small></h3><div class="scroller">${picked.map(p=>
+      poster(p.it,awardStrips({t:p.c,w:true,i:row.icon},p.it,row.icon),line(p.it))).join("")}</div></div>`);
+  }
+  $("arows").innerHTML=out.join("");
 }
 
-function fmtMin(m){if(!m)return"";const h=Math.floor(m/60);return h?`${h}h${String(m%60).padStart(2,"0")}`:`${m}min`}
-
-function openTitle(id){
-  const t=byId[id]; if(!t)return;
-  const btns=t.mine.map((m,i)=>`<button class="play" style="--c:${color(m.service)}" data-i="${i}">${m.direct?`▶ Assistir no ${esc(m.service)}`:m.roku==="launch/13"&&m.service!=="Prime Video"?`▶ Abrir o Prime Video (${esc(m.service)}, buscar lá)`:`▶ Abrir o ${esc(m.service)} (buscar lá)`}</button>`).join("");
-  const others=t.others.length?`<div class="alt">Também em: ${t.others.map(o=>esc(o.service)).join(", ")} (você não assina)</div>`:"";
-  const rent=t.rent?`<div class="alt">Disponível para alugar ou comprar.</div>`:"";
-  const none=!t.mine.length?`<button class="play" style="--c:#3a3f4c" data-search="1">🔍 Procurar no Roku</button>`:"";
+// ---------- ficha ----------
+function openTitle(it){
+  const d=DET[it.id]||{plot:"",cast:"",awardText:"",country:"",play:[]};
+  const meta=[it.year,fmtMin(it.runtime),it.rating?"IMDb "+it.rating:"",it.mine?"Minha nota "+it.mine:"",
+    it.rtC||it.rtA?`RT crítica ${it.rtC?it.rtC+"%":"–"} / público ${it.rtA?it.rtA+"%":"–"}`:""].filter(Boolean).join(" · ");
+  const info=[it.directorList&&it.directorList.length?"Direção: "+it.directorList.join(", "):"",it.lang,d.country].filter(Boolean).join(" · ");
+  const extra=[(it.genreList||[]).join(", "),d.cast?"Com "+d.cast:""].filter(Boolean).join(" · ");
+  const btns=it.services.map((s,i)=>`<button class="play" style="--c:${color(s)}" data-i="${i}">${it.direct[i]?`▶ Assistir no ${esc(s)}`:`▶ Abrir o ${esc(s)} (buscar lá)`}</button>`).join("");
   $("box").innerHTML=`<button class="close" aria-label="Fechar">×</button>
-    <div class="d-head">${t.poster?`<img src="${t.poster.replace("UX300","UX400")}" alt="">`:""}
-    <div><h2>${esc(t.title)}</h2>
-      <div class="d-sub">${[t.original&&t.original!==t.title?esc(t.original):"",t.year,fmtMin(t.runtime),t.rating?"★ "+t.rating.toFixed(1):""].filter(Boolean).join(" · ")}</div>
-      <div class="d-sub">${esc((t.genres||[]).join(", "))}</div>
-      ${t.cast&&t.cast.length?`<div class="d-sub">Com ${esc(t.cast.join(", "))}</div>`:""}
-      ${Object.entries(t.awards||{}).map(([g,v])=>`<div class="d-sub" style="color:#e3c16f">${g==="oscar"?"Oscar":"Cannes"} ${v[0].y||""}: ${v.map(a=>esc(a.c)+(a.w?" (venceu)":g==="oscar"?" (indicado)":"")).join(", ")}</div>`).join("")}
-      <div class="d-sub">${[t.my_rating?`Minha nota: ${t.my_rating}`:"",
-        t.rt_critics||t.rt_audience?`Rotten Tomatoes: crítica ${t.rt_critics?t.rt_critics+"%":"–"} · público ${t.rt_audience?t.rt_audience+"%":"–"}`:"",t.directors&&t.directors.length?`Direção: ${esc(t.directors.join(", "))}`:"",esc(t.lang||""),esc(t.country||"")].filter(Boolean).join(" · ")}</div></div></div>
-    ${t.plot?`<p class="d-plot">${esc(t.plot)}</p>`:""}
-    <div class="d-actions">${btns}${none}</div>${others}${rent}
-    ${!t.checked?`<div class="alt">Disponibilidade ainda não consultada para este título.</div>`:""}
-    <div class="links"><a href="https://www.imdb.com/title/${t.id}/" target="_blank" rel="noopener">IMDb</a>${t.jw?`<a href="https://www.justwatch.com${t.jw}" target="_blank" rel="noopener">JustWatch</a>`:""}</div>`;
+    <div class="d-head">${it.poster?`<img src="${POSTER(it.poster,500)}" alt="">`:""}
+    <div><h2>${esc(it.title)}</h2><div class="d-sub">${esc(meta)}</div><div class="d-sub">${esc(info)}</div><div class="d-sub">${esc(extra)}</div></div></div>
+    ${d.awardText?`<div class="d-aw">${esc(d.awardText)}</div>`:""}
+    ${d.plot?`<p class="d-plot">${esc(d.plot)}</p>`:""}
+    <div class="d-actions">${btns}</div>
+    <div class="links"><a href="https://www.imdb.com/title/${esc(it.id)}/" target="_blank" rel="noopener">IMDb</a></div>`;
   $("sheet").classList.add("open");
   $("box").querySelectorAll(".play").forEach(b=>b.onclick=async()=>{
-    b.disabled=true; const m=b.dataset.search?{}:t.mine[+b.dataset.i];
-    const r=await api("/api/play",{roku:m.roku,title:t.original||t.title,title_pt:t.title,year:t.year,type:t.type});
+    const i=+b.dataset.i, s=it.services[i]; b.disabled=true;
+    let r; try{r=await api("/api/play_title",{id:it.id,service:s})}catch{r={ok:false,error:"O computador não respondeu."}}
     b.disabled=false;
-    if(r.ok){
-      if(b.dataset.search)toast("Busca aberta no Roku");
-      else if((m.roku||"").startsWith("search:"))toast(`Abrindo pela busca do Roku — leva uns 30 segundos. Não mexa no controle enquanto isso.`,false,9000);
-      else if(!m.direct)toast(`Abrindo o ${m.roku==="launch/13"&&m.service!=="Prime Video"?`Prime Video (canal ${m.service})`:m.service}. Procure por “${t.title}”${t.original&&t.original!==t.title?` ou “${t.original}”`:""}.`,false,9000);
-      else toast(`Abrindo no ${m.service}…`);
-      $("sheet").classList.remove("open")
-    } else toast(r.error||"Falhou",true);
+    if(r.ok){toast(it.direct[i]?`Abrindo no ${s}… (alguns serviços levam até 30 segundos)`:`Abrindo o ${s}. Procure por “${it.title}”.`,false,8000);$("sheet").classList.remove("open")}
+    else toast(r.error||"Não deu certo.",true);
   });
   $("box").querySelector(".close").onclick=()=>$("sheet").classList.remove("open");
 }
 
+// ---------- atualização (barra de progresso) ----------
 async function pollStatus(){
-  const s=await api("/api/status"), el=$("status");
+  let s; try{s=await api("/api/status")}catch{return setTimeout(pollStatus,10000)}
   if(s.running){
     const pct=s.total?Math.round(100*s.done/s.total):0;
-    el.innerHTML=`${esc(s.step)}${s.total?` — ${s.done}/${s.total}`:""}<div class="bar"><i style="width:${pct}%"></i></div>`;
-    if(s.done&&s.done%150<8)load();
-    setTimeout(pollStatus,2500); pollStatus.wasRunning=true;
-  }else{
-    if(s.error)el.textContent="Erro na atualização: "+s.error;
-    else el.textContent=DATA&&DATA.synced_at?`Atualizado em ${new Date(DATA.synced_at*1000).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}`:"";
-    if(pollStatus.wasRunning){pollStatus.wasRunning=false;await load();el.textContent="Atualização concluída."}
-  }
+    if(!location.hash||location.hash==="#")$("sub").innerHTML=`${esc(s.step)}${s.total?` — ${s.done}/${s.total}`:""}<div class="bar"><i style="width:${pct}%"></i></div>`;
+    pollWas=true; setTimeout(pollStatus,2500);
+  }else if(pollWas){pollWas=false;await loadHome();toast("Atualização concluída.")}
 }
 
-$("grid").onclick=e=>{const c=e.target.closest(".card");if(c)openTitle(c.dataset.id)};
+// ---------- eventos ----------
+$("main").onclick=e=>{
+  const c=e.target.closest(".lcard"); if(c)return go("#l/"+encodeURIComponent(c.dataset.id));
+  const p=e.target.closest(".p"); if(p)openTitle(current[+p.dataset.n]);
+};
+$("back").onclick=()=>history.length>1?history.back():go("");
+$("filters").onclick=openPanel;
+$("shuffle").onclick=()=>{if(!current.length)return toast("Nada para sortear aqui.",true);openTitle(current[Math.floor(Math.random()*current.length)])};
+$("searchForm").onsubmit=async e=>{e.preventDefault();const q=$("q").value.trim();if(!q)return;
+  const d=await api("/api/roku/search?q="+encodeURIComponent(q));Object.assign(DET,d.details||{});SEARCH={q,items:d.items||[]};opts.search=defaults("search");$("q").blur();go("#s/"+encodeURIComponent(q))};
 $("sheet").onclick=e=>{if(e.target.id==="sheet")$("sheet").classList.remove("open")};
 document.addEventListener("keydown",e=>{if(e.key==="Escape")$("sheet").classList.remove("open")});
-$("chips").onclick=e=>{const c=e.target.closest(".chip");if(!c)return;const s=c.dataset.s;selSvc.has(s)?selSvc.delete(s):selSvc.add(s);c.classList.toggle("on");store.set("svc",[...selSvc]);render()};
-["list","type","sort","lang"].forEach(k=>$(k).onchange=()=>{store.set(k,$(k).value);render()});
-$("mineOnly").onchange=()=>{store.set("mine",$("mineOnly").checked);render()};
-let qT;$("q").oninput=()=>{clearTimeout(qT);qT=setTimeout(render,150)};
-$("shuffle").onclick=()=>{const a=current();if(!a.length)return toast("Nada para sortear com esses filtros",true);openTitle(a[Math.floor(Math.random()*a.length)].id)};
-$("sync").onclick=async()=>{await api("/api/sync",{});toast("Atualizando listas e disponibilidade…");setTimeout(pollStatus,800)};
+$("sync").onclick=async()=>{await api("/api/sync",{});toast("Atualizando listas e disponibilidade…");pollWas=true;setTimeout(pollStatus,800)};
 $("fab").onclick=()=>$("remote").classList.toggle("open");
 document.querySelectorAll(".pad button").forEach(b=>b.onclick=async()=>{const r=await api("/api/key",{key:b.dataset.k});if(!r.ok)toast(r.error||"Falhou",true)});
 
-load().then(pollStatus);
+loadHome().then(pollStatus).catch(()=>{$("main").innerHTML=`<div class="empty">Não consegui falar com o computador.</div>`});
 </script>
 </body>
 </html>

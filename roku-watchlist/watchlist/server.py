@@ -2,13 +2,14 @@
 import gzip
 import json
 import os
+import re
 import sys
 import threading
 import time
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from .common import CACHE_PATH, CONFIG, STATIC, lan_ip, load_json, log, state
+from .common import CACHE_PATH, CHANNEL_DIR, CONFIG, STATIC, lan_ip, load_json, log, state
 from .data import build_payload, sync
 from .feed import build_channel_zip, record_play, roku_feed, roku_home, roku_list, roku_search
 from .roku import KEYS, play_link, roku_post
@@ -54,6 +55,12 @@ class Handler(BaseHTTPRequestHandler):
             except OSError:
                 tail = []
             return self.send(200, "".join(tail).encode(), "text/plain; charset=utf-8")
+        m = re.fullmatch(r"/img/([a-z_]+)\.png", path)
+        if m:                                   # ícones do canal, para a página do celular
+            f = os.path.join(CHANNEL_DIR, "images", m.group(1) + ".png")
+            if os.path.isfile(f):
+                with open(f, "rb") as fh:
+                    return self.send(200, fh.read(), "image/png")
         if path in ("/", "/index.html"):
             with open(os.path.join(STATIC, "index.html"), "rb") as f:
                 return self.send(200, f.read(), "text/html; charset=utf-8")
