@@ -4,6 +4,7 @@
 '   mode = "row":     uma lista: da cópia guardada se ainda vale, senão do PC
 '   mode = "search":  busca no PC em todas as listas
 '   mode = "posters": guarda as capas no espaço do canal, para as próximas aberturas
+'   mode = "posterlist": diz quais capas já estão guardadas
 '   mode = "play":    pede ao PC para abrir o título; sem PC, abre sozinho quando dá
 
 sub init()
@@ -54,6 +55,10 @@ sub doWork()
         end if
     else if mode = "posters" then
         savePosters(m.top.body.codes)
+    else if mode = "posterlist" then
+        names = CreateObject("roFileSystem").GetDirectoryListing("cachefs:/p")
+        if names = invalid then names = []
+        m.top.result = { names: names }
     else if mode = "play" then
         body = m.top.body
         payload = FormatJson({ id: body.id, service: body.service })

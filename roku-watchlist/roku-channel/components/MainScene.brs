@@ -76,12 +76,11 @@ sub init()
     m.posterTask = invalid
     m.posterCache = {}     ' capas já guardadas (os códigos diferenciam maiúsculas)
     m.posterCache.SetModeCaseSensitive()
-    listing = CreateObject("roFileSystem").GetDirectoryListing("cachefs:/p")
-    if listing <> invalid then
-        for each name in listing
-            if Right(name, 4) = ".jpg" then m.posterCache[Left(name, Len(name) - 4)] = true
-        end for
-    end if
+    ' o Roku só deixa ler pastas fora da tela (roFileSystem trava a abertura do canal aqui)
+    m.listTask = CreateObject("roSGNode", "ApiTask")
+    m.listTask.observeField("result", "onPosterList")
+    m.listTask.mode = "posterlist"
+    m.listTask.control = "RUN"
 
     m.offline = false
     m.pendingFeed = invalid
@@ -226,6 +225,14 @@ function posterUri(code as string) as string
     end if
     return posterWeb(code)
 end function
+
+' Capas já guardadas de aberturas anteriores; as que forem pedidas antes disso
+' só vêm da internet nesta vez (a tarefa de capas vê que já existem e não baixa de novo).
+sub onPosterList()
+    for each name in m.listTask.result.names
+        if Right(name, 4) = ".jpg" then m.posterCache[Left(name, Len(name) - 4)] = true
+    end for
+end sub
 
 sub flushPosters()
     if m.posterTask <> invalid or m.posterQueue.Count() = 0 then return
