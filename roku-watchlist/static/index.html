@@ -16,7 +16,8 @@ html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.4 system-u
 button,select,input{font:inherit;color:inherit}
 header{position:sticky;top:0;z-index:5;background:rgba(14,15,19,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:10px 16px}
 .top{display:flex;align-items:center;gap:8px}
-.back{background:none;border:0;color:var(--text);font-size:24px;line-height:1;padding:0 6px 0 0;cursor:pointer}
+.back{flex:none;width:44px;height:40px;margin-left:-10px;display:flex;align-items:center;justify-content:center;background:none;border:0;border-radius:10px;color:var(--text);font-size:32px;line-height:1;padding:0 0 4px;cursor:pointer}
+.back:active{background:var(--panel2)}
 h1{font-size:18px;margin:0;font-weight:700;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .btn{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:7px 11px;cursor:pointer;white-space:nowrap;font-size:14px}
 .sub{color:var(--mute);font-size:13px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -368,7 +369,8 @@ $("main").onclick=e=>{
   const c=e.target.closest(".lcard"); if(c)return go("#l/"+encodeURIComponent(c.dataset.id));
   const p=e.target.closest(".p"); if(p)openTitle(current[+p.dataset.n]);
 };
-$("back").onclick=()=>history.length>1?history.back():go("");
+// toda tela interna fica logo acima da inicial no histórico, então voltar sempre leva para ela
+$("back").onclick=()=>{if(location.hash&&location.hash!=="#")history.back();else go("")};
 $("filters").onclick=openPanel;
 $("shuffle").onclick=()=>{if(!current.length)return toast("Nada para sortear aqui.",true);openTitle(current[Math.floor(Math.random()*current.length)])};
 $("searchForm").onsubmit=async e=>{e.preventDefault();const q=$("q").value.trim();if(!q)return;
@@ -383,6 +385,9 @@ $("sync").onclick=async()=>{await api("/api/sync",{});toast("Atualizando listas 
 $("fab").onclick=()=>$("remote").classList.toggle("open");
 document.querySelectorAll(".pad button").forEach(b=>b.onclick=async()=>{const r=await api("/api/key",{key:b.dataset.k});if(!r.ok)toast(r.error||"Falhou",true)});
 
+// abriu direto numa lista (recarregou ou atalho): põe a tela inicial embaixo, para o voltar
+// (a seta ou o botão do celular) cair nela em vez de sair da página
+if(location.hash&&location.hash!=="#"){const h=location.hash;history.replaceState(null,"","#");history.pushState(null,"",h)}
 loadHome().then(pollStatus).catch(()=>{$("main").innerHTML=`<div class="empty">Não consegui falar com o computador.</div>`});
 </script>
 </body>
