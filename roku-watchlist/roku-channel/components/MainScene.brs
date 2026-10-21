@@ -45,6 +45,7 @@ sub init()
     m.results = ["Indicados e vencedores", "Só vencedores", "Só indicados"]
     m.kinds = ["Filmes e séries", "Só filmes", "Só séries"]
     m.durs = ["Qualquer duração", "Até 1h40", "Até 2h", "Mais de 2h"]
+    m.seens = ["Vistos e não vistos", "Só os que não vi"]     ' "visto" = tem nota sua no IMDb
     resetOptions()
 
     m.home.observeField("itemSelected", "onHomeSelected")
@@ -105,7 +106,7 @@ sub startFeed(full as boolean)
 end sub
 
 sub resetOptions()
-    m.opts = { sort: 0, lang: "", service: "", genre: "", director: "", kind: 0, dur: 0, acat: "", ayear: "", ares: 0 }
+    m.opts = { sort: 0, lang: "", service: "", genre: "", director: "", kind: 0, dur: 0, seen: 0, acat: "", ayear: "", ares: 0 }
 end sub
 
 ' ---------- carregamento ----------
@@ -398,6 +399,7 @@ function passes(it as object) as boolean
     if o.lang <> "" and it.lang <> o.lang then return false
     if o.service <> "" and not contains(it.services, o.service) then return false
     if o.genre <> "" and not contains(it.genreList, o.genre) then return false
+    if o.seen = 1 and it.mine > 0 then return false
     if o.kind = 1 and it.series then return false
     if o.kind = 2 and not it.series then return false
     if o.dur = 1 and (it.runtime = 0 or it.runtime > 100) then return false
@@ -478,6 +480,7 @@ function activeFilters() as string
     if o.genre <> "" then f.Push(o.genre)
     if o.kind > 0 then f.Push(m.kinds[o.kind])
     if o.dur > 0 then f.Push(m.durs[o.dur])
+    if o.seen > 0 then f.Push(m.seens[o.seen])
     if o.director <> "" then f.Push(o.director)
     if o.acat <> "" then f.Push(o.acat)
     if o.ayear <> "" then f.Push(o.ayear)
@@ -571,7 +574,7 @@ end sub
 function catKeys() as object
     keys = ["sort"]
     if m.feed.rows[m.rowIndex].award = true then keys.Append(["acat", "ayear", "ares"])
-    keys.Append(["lang", "service", "genre", "director", "kind", "dur", "clear"])
+    keys.Append(["seen", "lang", "service", "genre", "director", "kind", "dur", "clear"])
     return keys
 end function
 
@@ -588,6 +591,7 @@ function catLabels() as object
         director: "Diretor:  " + iif(o.director, "Todos"),
         kind: "Tipo:  " + m.kinds[o.kind],
         dur: "Duração:  " + m.durs[o.dur],
+        seen: "Mostrar:  " + m.seens[o.seen],
         clear: "Limpar filtros"
     }
     labels = []
@@ -637,6 +641,9 @@ sub onCatSelected()
     else if m.cat = "dur" then
         m.panelTitle.text = "Duração"
         fixed = m.durs
+    else if m.cat = "seen" then
+        m.panelTitle.text = "Mostrar"
+        fixed = m.seens
     else if m.cat = "ares" then
         m.panelTitle.text = "Resultado"
         fixed = m.results

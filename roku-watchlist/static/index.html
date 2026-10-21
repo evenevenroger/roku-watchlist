@@ -152,6 +152,7 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const POSTER=(code,w)=>!code?"":code.startsWith("http")?code:`https://m.media-amazon.com/images/M/${code}._V1_QL75_UX${w||300}_.jpg`;
 const SORTS=[["pos","Ordem da lista"],["r","Nota IMDb"],["mine","Minha nota"],["lang","Idioma"],["new","Mais recentes"],["old","Mais antigos"],["short","Mais curtos"],["title","Título (A-Z)"],["ay","Ano do prêmio"]];
+const SEENS=["Vistos e não vistos","Só os que não vi"];   // "visto" = tem nota sua no IMDb
 const KINDS=["Filmes e séries","Só filmes","Só séries"], DURS=["Qualquer duração","Até 1h40","Até 2h","Mais de 2h"], RESULTS=["Indicados e vencedores","Só vencedores","Só indicados"];
 
 let HOME=null, LISTS={}, DET={}, SEARCH=null, opts={}, pollWas=false;
@@ -195,7 +196,7 @@ function header(title,sub,inner){
   $("back").hidden=!inner; $("filters").hidden=true; $("shuffle").hidden=!inner;
   $("searchForm").hidden=!!inner;
 }
-function defaults(id){return{sort:id==="new"||id==="recent"?0:1,lang:"",service:"",genre:"",director:"",kind:0,dur:0,acat:"",ayear:"",ares:0}}
+function defaults(id){return{sort:id==="new"||id==="recent"?0:1,seen:0,lang:"",service:"",genre:"",director:"",kind:0,dur:0,acat:"",ayear:"",ares:0}}
 
 // ---------- tela inicial ----------
 function showHome(){
@@ -224,6 +225,7 @@ function focusInfo(it){const g=(it.genreList||[]).slice(0,3).join(", ");return[i
 
 // ---------- lista: ordenar e filtrar como no canal ----------
 function passes(it,o){
+  if(o.seen===1&&it.mine>0)return false;
   if(o.lang&&it.lang!==o.lang)return false;
   if(o.service&&!it.services.includes(o.service))return false;
   if(o.genre&&!(it.genreList||[]).includes(o.genre))return false;
@@ -254,7 +256,7 @@ function showList(row){
       return poster(it,it.strips||[],line)}).join("")}</div>`
     :`<div class="empty">${row.id==="search"?"Nada encontrado.":"Nada com esses filtros."}</div>`;
 }
-function activeFilters(o){return[o.lang,o.service,o.genre,o.kind?KINDS[o.kind]:"",o.dur?DURS[o.dur]:"",o.director,o.acat,o.ayear,o.ares?RESULTS[o.ares]:""].filter(Boolean).join(", ")}
+function activeFilters(o){return[o.seen?SEENS[o.seen]:"",o.lang,o.service,o.genre,o.kind?KINDS[o.kind]:"",o.dur?DURS[o.dur]:"",o.director,o.acat,o.ayear,o.ares?RESULTS[o.ares]:""].filter(Boolean).join(", ")}
 function valueCounts(items,key){
   const t={};
   for(const it of items){
@@ -270,11 +272,11 @@ function openPanel(){
   const counts=(k,all)=>[["",all],...valueCounts(row.items,k).map(([v,n])=>[v,`${v} (${n})`])];
   let html=`<button class="close" aria-label="Fechar">×</button><h2>Ordenar e filtrar</h2>`+sel("sort","Ordenar por",SORTS.map((s,i)=>[i,s[1]]),o.sort);
   if(row.award)html+=sel("acat","Categoria",counts("acat","Todas"),o.acat)+sel("ayear","Ano",counts("ayear","Todos"),o.ayear)+sel("ares","Resultado",RESULTS.map((r,i)=>[i,r]),o.ares);
-  html+=sel("lang","Idioma",counts("lang","Todos"),o.lang)+sel("service","Serviço",counts("service","Todos"),o.service)+sel("genre","Gênero",counts("genre","Todos"),o.genre)
+  html+=sel("seen","Mostrar",SEENS.map((s,i)=>[i,s]),o.seen)+sel("lang","Idioma",counts("lang","Todos"),o.lang)+sel("service","Serviço",counts("service","Todos"),o.service)+sel("genre","Gênero",counts("genre","Todos"),o.genre)
     +sel("director","Diretor",counts("director","Todos"),o.director)+sel("kind","Tipo",KINDS.map((k,i)=>[i,k]),o.kind)+sel("dur","Duração",DURS.map((d,i)=>[i,d]),o.dur)
     +`<div class="row2"><button class="btn" id="clear">Limpar filtros</button><button class="btn primary" id="apply">Pronto</button></div>`;
   $("box").innerHTML=html; $("sheet").classList.add("open");
-  const num=["sort","kind","dur","ares"];
+  const num=["sort","kind","dur","ares","seen"];
   $("box").querySelectorAll("select").forEach(s=>s.onchange=()=>{o[s.dataset.k]=num.includes(s.dataset.k)?+s.value:s.value;showList(row)});
   $("clear").onclick=()=>{const keep=o.sort;Object.assign(o,defaults(row.id),{sort:keep});$("sheet").classList.remove("open");showList(row)};
   $("apply").onclick=()=>$("sheet").classList.remove("open");
