@@ -63,9 +63,9 @@ sub showContent()
         m.rtC.text = pct(rtC)
         m.rtA.text = pct(rtA)
         if stripText <> "" then
-            m.rt.translation = [8, 268]
+            m.rt.translation = [8, 264]
         else
-            m.rt.translation = [8, 298]
+            m.rt.translation = [8, 292]
         end if
     end if
 end sub

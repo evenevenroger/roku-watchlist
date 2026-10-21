@@ -9,24 +9,24 @@
     <Rectangle width="220" height="330" color="0x22252EFF" />
     <Poster id="poster" width="220" height="330" loadDisplayMode="scaleToZoom" />
 
-    <Rectangle id="imdbBg" translation="[8,8]" width="44" height="24" color="0x0000006B" />
-    <Label id="imdb" translation="[8,8]" width="44" height="24" horizAlign="center" vertAlign="center" color="0xF5C518FF">
-      <Font role="font" uri="font:BoldSystemFontFile" size="17" />
+    <Rectangle id="imdbBg" translation="[8,8]" width="54" height="30" color="0x0000006B" />
+    <Label id="imdb" translation="[8,8]" width="54" height="30" horizAlign="center" vertAlign="center" color="0xF5C518FF">
+      <Font role="font" uri="font:BoldSystemFontFile" size="20" />
     </Label>
-    <Rectangle id="mineBg" translation="[156,8]" width="56" height="24" color="0x6C3FF58C" />
-    <Label id="mine" translation="[156,8]" width="56" height="24" horizAlign="center" vertAlign="center" color="0xFFFFFFFF">
-      <Font role="font" uri="font:BoldSystemFontFile" size="17" />
+    <Rectangle id="mineBg" translation="[144,8]" width="68" height="30" color="0x6C3FF58C" />
+    <Label id="mine" translation="[144,8]" width="68" height="30" horizAlign="center" vertAlign="center" color="0xFFFFFFFF">
+      <Font role="font" uri="font:BoldSystemFontFile" size="20" />
     </Label>
 
     <Group id="rt">
-      <Rectangle id="rtBg" width="128" height="24" color="0x0000006B" />
-      <Poster uri="pkg:/images/rt_tomato.png" translation="[5,4]" width="16" height="16" />
-      <Label id="rtC" translation="[23,0]" width="40" height="24" vertAlign="center" color="0xFFFFFFFF">
-        <Font role="font" uri="font:BoldSystemFontFile" size="16" />
+      <Rectangle id="rtBg" width="154" height="30" color="0x0000006B" />
+      <Poster uri="pkg:/images/rt_tomato.png" translation="[6,5]" width="20" height="20" />
+      <Label id="rtC" translation="[29,0]" width="48" height="30" vertAlign="center" color="0xFFFFFFFF">
+        <Font role="font" uri="font:BoldSystemFontFile" size="19" />
       </Label>
-      <Poster uri="pkg:/images/rt_popcorn.png" translation="[66,4]" width="16" height="16" />
-      <Label id="rtA" translation="[84,0]" width="40" height="24" vertAlign="center" color="0xFFFFFFFF">
-        <Font role="font" uri="font:BoldSystemFontFile" size="16" />
+      <Poster uri="pkg:/images/rt_popcorn.png" translation="[80,5]" width="20" height="20" />
+      <Label id="rtA" translation="[103,0]" width="48" height="30" vertAlign="center" color="0xFFFFFFFF">
+        <Font role="font" uri="font:BoldSystemFontFile" size="19" />
       </Label>
     </Group>
 

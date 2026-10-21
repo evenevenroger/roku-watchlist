@@ -176,6 +176,8 @@ end sub
 sub onHomeSelected()
     m.rowIndex = m.home.itemSelected
     resetOptions()
+    ' padrão: maior nota do IMDb primeiro (novidades seguem da mais recente para a mais antiga)
+    if m.feed.rows[m.rowIndex].id <> "new" then m.opts.sort = 1
     if m.feed.rows[m.rowIndex].award = true then
         showAwards()
     else
@@ -832,6 +834,7 @@ sub onSearchButton()
     m.feed.rows.Push({ id: "search", name: "Busca: " + q, total: results.Count(), award: false, items: results })
     m.rowIndex = m.feed.rows.Count() - 1
     resetOptions()
+    m.opts.sort = 1
     showList()
     if results.Count() = 0 then m.message.text = "Nada encontrado para " + Chr(34) + q + Chr(34) + "."
 end sub
