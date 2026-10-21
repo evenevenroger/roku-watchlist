@@ -47,7 +47,7 @@ def jw_lookup(item):
         if q and q not in queries:
             queries.append(q)
     for q in queries:
-        edges = None
+        edges, r = None, None
         for attempt in range(3):
             try:
                 time.sleep(1.5)          # devagar: o JustWatch bloqueia rajadas

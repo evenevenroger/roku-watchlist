@@ -106,12 +106,18 @@ sub savePosters(codes as object)
     if not fs.Exists("cachefs:/p") then fs.CreateDirectory("cachefs:/p")
     done = []
     xfer = CreateObject("roUrlTransfer")
+    xfer.SetCertificatesFile("common:/certs/ca-bundle.crt")    ' as capas vêm por HTTPS
+    xfer.InitClientCertificates()
     for each code in codes
         if done.Count() >= 300 then exit for
         file = posterFile(code)
         if not fs.Exists(file) then
             xfer.SetUrl(posterWeb(code))
-            if xfer.GetToFile(file) = 200 then done.Push(code)
+            if xfer.GetToFile(file) = 200 then
+                done.Push(code)
+            else
+                DeleteFile(file)      ' não deixa capa pela metade passar por guardada
+            end if
         else
             done.Push(code)
         end if

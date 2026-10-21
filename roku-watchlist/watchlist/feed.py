@@ -148,6 +148,7 @@ def compact_feed():
                 p = it.get("poster") or ""
                 if p.startswith(POSTER_PRE) and p.endswith(POSTER_SUF):
                     it["poster"] = p[len(POSTER_PRE):-len(POSTER_SUF)]
+        feed["_rows"] = {r["id"]: _row_payload(feed, r) for r in feed["rows"]}   # (corpo, versão)
         _memo.update(key=key, feed=feed)
     return _memo["feed"]
 
@@ -167,7 +168,7 @@ def roku_home(have=""):
     feed = compact_feed()
     rows = []
     for r in feed["rows"]:
-        _, v = _row_payload(feed, r)
+        _, v = feed["_rows"][r["id"]]
         items = r["items"] if r["id"] in ("new", "recent") else sorted(r["items"], key=lambda i: -i["r"])
         rows.append({"id": r["id"], "name": r["name"], "total": r["total"], "award": r["award"],
                      "count": len(r["items"]), "v": v, "covers": [i["poster"] for i in items[:3]]})
@@ -181,10 +182,9 @@ def roku_home(have=""):
 
 def roku_list(list_id, have=""):
     feed = compact_feed()
-    r = next((r for r in feed["rows"] if r["id"] == list_id), None)
-    if r is None:
+    if list_id not in feed["_rows"]:
         return {"error": "lista não encontrada"}
-    body, v = _row_payload(feed, r)
+    body, v = feed["_rows"][list_id]
     if have and have == v:
         return {"same": True, "v": v}
     return {**body, "v": v}

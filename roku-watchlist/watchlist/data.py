@@ -51,7 +51,13 @@ def sync(force_offers=False):
                 minimum = int(L["id"][5:] or 8)
                 items = [t for t, v in rated_all if v >= minimum]
             else:
-                items = fetch_list(L["id"])
+                try:
+                    items = fetch_list(L["id"])
+                except Exception:  # noqa: BLE001 — ex.: lista que virou privada; fica a cópia anterior
+                    log.exception("não consegui ler a lista %s; mantenho a cópia anterior", L["name"])
+                    if L["id"] in (cache.get("lists") or {}):
+                        lists[L["id"]] = cache["lists"][L["id"]]
+                    continue
             lists[L["id"]] = [t["id"] for t in items]
             for t in items:
                 cache["titles"][t["id"]] = t

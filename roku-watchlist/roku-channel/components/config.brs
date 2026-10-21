@@ -4,15 +4,19 @@ function builtInServer() as string
     return "__SERVER__"
 end function
 
+' O endereço achado na rede só vale enquanto o canal instalado for o mesmo:
+' um zip novo traz o endereço atual do PC, e esse passa a valer.
 function serverUrl() as string
-    saved = CreateObject("roRegistrySection", "watchlist").Read("server")
-    if saved <> "" then return saved
+    sec = CreateObject("roRegistrySection", "watchlist")
+    saved = sec.Read("server")
+    if saved <> "" and sec.Read("server_for") = builtInServer() then return saved
     return builtInServer()
 end function
 
 sub saveServer(url as string)
     sec = CreateObject("roRegistrySection", "watchlist")
     sec.Write("server", url)
+    sec.Write("server_for", builtInServer())
     sec.Flush()
 end sub
 

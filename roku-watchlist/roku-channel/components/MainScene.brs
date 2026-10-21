@@ -177,6 +177,13 @@ sub applyFeed(data as object)
         card.HDPosterUrl = coverAt(row.covers, 0)
         card.SDPosterUrl = coverAt(row.covers, 1)
         card.FHDPosterUrl = coverAt(row.covers, 2)
+        webs = []
+        for i = 0 to 2
+            code = ""
+            if row.covers <> invalid and row.covers.Count() > i then code = row.covers[i]
+            webs.Push(posterWeb(code))
+        end for
+        card.addFields({ webs: webs })
     end for
     m.home.content = root
     m.message.visible = false
@@ -467,6 +474,7 @@ sub addPosterNode(parent as object, it as object, line as string, strips as obje
     node.title = it.title
     node.HDPosterUrl = it.poster
     node.ShortDescriptionLine1 = it.rating
+    node.addFields({ posterWeb: it.posterWeb })
     node.ShortDescriptionLine2 = line
     mineText = ""
     if it.mine > 0 then mineText = "Eu " + it.mine.ToStr()

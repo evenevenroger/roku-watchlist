@@ -19,6 +19,13 @@ sub init()
     m.strip2Line = m.top.findNode("strip2Line")
     m.strip2Icon = m.top.findNode("strip2Icon")
     m.strip2Text = m.top.findNode("strip2Text")
+    m.web = ""
+    m.poster.observeField("loadStatus", "onPosterStatus")
+end sub
+
+' A capa guardada no Roku pode ter sido apagada pelo sistema: tenta a da internet.
+sub onPosterStatus()
+    if m.poster.loadStatus = "failed" and m.web <> "" and m.poster.uri <> m.web then m.poster.uri = m.web
 end sub
 
 function field(c as object, name as string, fallback as dynamic) as dynamic
@@ -29,6 +36,7 @@ end function
 sub showContent()
     c = m.top.itemContent
     if c = invalid then return
+    m.web = field(c, "posterWeb", "")
     m.poster.uri = c.HDPosterUrl
     m.title.text = c.title
     m.svc.text = c.ShortDescriptionLine2
