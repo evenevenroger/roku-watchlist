@@ -138,6 +138,21 @@ def fetch_titles(ids):
     return out
 
 
+Q_USER_LISTS = """query($user:ID!){ userListSearch(first:100, listOwnerUserId:$user){
+  edges{ node{ id name{originalText} listType{id} visibility{id} } } } }"""
+
+
+def fetch_user_lists():
+    """Suas listas públicas de títulos no IMDb (a watchlist vem à parte)."""
+    d = imdb_query(Q_USER_LISTS, {"user": CONFIG["imdb_user"]})
+    out = []
+    for e in d["userListSearch"]["edges"]:
+        n = e["node"]
+        if (n.get("listType") or {}).get("id") == "TITLES" and (n.get("visibility") or {}).get("id") == "PUBLIC":
+            out.append({"id": n["id"], "name": (n.get("name") or {}).get("originalText") or n["id"]})
+    return out
+
+
 def fetch_list(list_id):
     items, after = [], None
     while True:

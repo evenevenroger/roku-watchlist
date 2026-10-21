@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from .awards import fetch_awards
 from .common import CACHE_PATH, CONFIG, RT_PATH, load_json, lock, log, save_json, state
-from .imdb import fetch_list, fetch_rated, fetch_titles
+from .imdb import fetch_list, fetch_rated, fetch_titles, fetch_user_lists
 from .justwatch import JustWatchUnavailable, jw_lookup, roku_link, service_for
 from .rottentomatoes import rt_lock
 
@@ -22,8 +22,14 @@ def sync(force_offers=False):
         state["step"] = "Lendo as suas notas no IMDb"
         rated_all = fetch_rated(1)
         cache["my_ratings"] = {t["id"]: v for t, v in rated_all}
-        for i, L in enumerate(CONFIG["lists"]):
-            state["step"] = f"Lendo lista {i + 1}/{len(CONFIG['lists'])}: {L['name']}"
+        if CONFIG.get("auto_lists", True):
+            try:
+                cache["user_lists"] = fetch_user_lists()
+            except Exception:  # noqa: BLE001 — segue com as listas já conhecidas
+                log.exception("não consegui ler as suas listas públicas")
+        all_lists = effective_lists(cache)
+        for i, L in enumerate(all_lists):
+            state["step"] = f"Lendo lista {i + 1}/{len(all_lists)}: {L['name']}"
             if L["id"].startswith("award:"):
                 group = L["id"].split(":", 1)[1]
                 fresh = time.time() - (cache.get("awards_at") or {}).get(group, 0) < AWARDS_MAX_AGE
@@ -99,6 +105,22 @@ def sync(force_offers=False):
 AWARDS_MAX_AGE = 30 * 86400
 
 
+def effective_lists(cache):
+    """Listas do config.json na ordem dele, com o nome atual do IMDb, mais as listas
+    públicas novas (entram depois das suas listas e antes de Vistos/Oscar/Cannes).
+    A watchlist (predefinida) não aparece como lista comum."""
+    discovered = cache.get("user_lists") or []
+    names = {d["id"]: d["name"] for d in discovered}
+    watch_id = CONFIG.get("watchlist_list_id", "ls001832334")
+    configured = [dict(L, name=names.get(L["id"], L["name"])) for L in CONFIG["lists"]]
+    known = {L["id"] for L in configured} | {watch_id}
+    new = [{"id": d["id"], "name": d["name"]} for d in discovered if d["id"] not in known]
+    special = ("rated", "award:")
+    head = [L for L in configured if not L["id"].startswith(special)]
+    tail = [L for L in configured if L["id"].startswith(special)]
+    return head + new + tail
+
+
 def track_availability(cache, ids):
     """Quando cada título apareceu em cada serviço seu (para a fileira de novidades).
     Na primeira vez, tudo conta como antigo (0); depois, guarda a data em que surgiu."""
@@ -145,7 +167,7 @@ def build_payload():
                        "awards": {g: v[tid] for g, v in (cache.get("awards") or {}).items()
                                   if tid in v}})
     lists = [{"id": L["id"], "name": L["name"], "items": cache["lists"].get(L["id"], [])}
-             for L in CONFIG["lists"]]
+             for L in effective_lists(cache)]
     return {"titles": titles, "lists": lists, "synced_at": cache.get("synced_at"),
             "last_error": cache.get("last_error"), "incomplete": bool(cache.get("offers_incomplete")),
             "services": [s["name"] for s in CONFIG["services"]]}
