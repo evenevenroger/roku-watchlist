@@ -21,6 +21,8 @@ h1{font-size:18px;margin:0;font-weight:700;flex:1;min-width:0;white-space:nowrap
 .btn{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:7px 11px;cursor:pointer;white-space:nowrap;font-size:14px}
 .sub{color:var(--mute);font-size:13px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .search{display:flex;gap:8px;margin-top:10px}
+.tick{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:14px;color:var(--text);cursor:pointer;user-select:none;width:max-content}
+.tick input{accent-color:var(--accent);width:18px;height:18px;margin:0}
 .search input{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
 .bar{height:3px;background:var(--line);border-radius:3px;margin-top:6px;overflow:hidden}
 .bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .4s}
@@ -121,6 +123,7 @@ main{padding:14px 16px 90px}
     <button class="btn" id="sync" title="Atualizar listas e disponibilidade">↻</button>
   </div>
   <div class="sub" id="sub"></div>
+  <label class="tick" id="unseenBox"><input type="checkbox" id="unseen"> Só os que não vi</label>
   <form class="search" id="searchForm"><input id="q" type="search" placeholder="Buscar título em todas as listas…" enterkeyhint="search"></form>
 </header>
 <main id="main"><div class="empty">Carregando suas listas…</div></main>
@@ -156,6 +159,8 @@ const SEENS=["Vistos e não vistos","Só os que não vi"];   // "visto" = tem no
 const KINDS=["Filmes e séries","Só filmes","Só séries"], DURS=["Qualquer duração","Até 1h40","Até 2h","Mais de 2h"], RESULTS=["Indicados e vencedores","Só vencedores","Só indicados"];
 
 let HOME=null, LISTS={}, DET={}, SEARCH=null, opts={}, pollWas=false;
+// "Só os que não vi" da tela inicial: vale para todas as listas e fica guardado neste celular
+let UNSEEN=false; try{UNSEEN=localStorage.getItem("unseen")==="1"}catch{}
 
 function toast(msg,err,ms){const t=$("toast");t.textContent=msg;t.className="toast show"+(err?" err":"");clearTimeout(t._h);t._h=setTimeout(()=>t.className="toast",ms||3500)}
 async function api(path,body){const r=await fetch(path,body?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}:{});return r.json()}
@@ -194,16 +199,18 @@ async function route(){
 function header(title,sub,inner){
   $("title").textContent=title; $("sub").textContent=sub||"";
   $("back").hidden=!inner; $("filters").hidden=true; $("shuffle").hidden=!inner;
-  $("searchForm").hidden=!!inner;
+  $("searchForm").hidden=!!inner; $("unseenBox").hidden=!!inner;
 }
-function defaults(id){return{sort:id==="new"||id==="recent"?0:1,seen:0,lang:"",service:"",genre:"",director:"",kind:0,dur:0,acat:"",ayear:"",ares:0}}
+function defaults(id){return{sort:id==="new"||id==="recent"?0:1,seen:UNSEEN?1:0,lang:"",service:"",genre:"",director:"",kind:0,dur:0,acat:"",ayear:"",ares:0}}
 
 // ---------- tela inicial ----------
 function showHome(){
   header("Minha Watchlist",statusText(),false);
   $("main").innerHTML=`<div class="cards">${HOME.rows.map(r=>{
-    const txt=r.id==="new"?`${r.count} títulos nas últimas 3 semanas`:r.id==="recent"?`${r.count} títulos que você abriu`:`${r.count} para assistir agora · ${r.total} na lista`;
-    const cv=[0,1,2].map(i=>`<div style="background-image:url('${POSTER((r.covers||[])[i],220)}')"></div>`).join("");
+    // com "Só os que não vi", o cartão conta e mostra só o que você ainda não viu
+    const n=UNSEEN&&r.unseen!==undefined?r.unseen:r.count, covers=UNSEEN&&r.coversUnseen?r.coversUnseen:r.covers;
+    const txt=r.id==="new"?`${n} títulos nas últimas 3 semanas`:r.id==="recent"?`${n} títulos que você abriu`:`${n} ${UNSEEN?"que você não viu":"para assistir agora"} · ${r.total} na lista`;
+    const cv=[0,1,2].map(i=>`<div style="background-image:url('${POSTER((covers||[])[i],220)}')"></div>`).join("");
     return`<div class="lcard" data-id="${esc(r.id)}"><div class="covers">${cv}</div><div class="n">${esc(r.name)}</div><div class="c">${txt}</div></div>`}).join("")}</div>`;
   current=[];
 }
@@ -278,19 +285,20 @@ function openPanel(){
   $("box").innerHTML=html; $("sheet").classList.add("open");
   const num=["sort","kind","dur","ares","seen"];
   $("box").querySelectorAll("select").forEach(s=>s.onchange=()=>{o[s.dataset.k]=num.includes(s.dataset.k)?+s.value:s.value;showList(row)});
-  $("clear").onclick=()=>{const keep=o.sort;Object.assign(o,defaults(row.id),{sort:keep});$("sheet").classList.remove("open");showList(row)};
+  $("clear").onclick=()=>{const keep=o.sort;Object.assign(o,defaults(row.id),{sort:keep,seen:0});$("sheet").classList.remove("open");showList(row)};
   $("apply").onclick=()=>$("sheet").classList.remove("open");
   $("box").querySelector(".close").onclick=()=>$("sheet").classList.remove("open");
 }
 
 // ---------- festivais: anos e fileiras (igual ao canal) ----------
-let AWROW=null, AWYEAR="";
+let AWROW=null, AWYEAR="", AWITEMS=[];
 function showAwards(row){
   AWROW=row; $("filters").hidden=true;
+  AWITEMS=opts[row.id].seen?row.items.filter(it=>!(it.mine>0)):row.items;   // "Só os que não vi"
   const counts={};
-  for(const it of row.items)new Set((it.aw||[]).map(a=>a.y).filter(Boolean)).forEach(y=>counts[y]=(counts[y]||0)+1);
+  for(const it of AWITEMS)new Set((it.aw||[]).map(a=>a.y).filter(Boolean)).forEach(y=>counts[y]=(counts[y]||0)+1);
   const years=Object.keys(counts).sort().reverse();
-  header(row.name,"",true);
+  header(row.name,opts[row.id].seen?"Só os que não vi":"",true);
   if(!years.length){$("main").innerHTML=`<div class="empty">Nenhum filme desta lista está nos seus serviços.</div>`;return}
   if(!counts[AWYEAR])AWYEAR=years[0];
   $("main").innerHTML=`<div class="years" id="years">${years.map(y=>`<button class="yr${y===AWYEAR?" on":""}" data-y="${y}">${y}<small>${counts[y]}</small></button>`).join("")}</div><div id="arows"></div>`;
@@ -303,7 +311,7 @@ function buildAwardRows(){
   if(row.id==="award:oscar"){
     for(const cat of row.cats){
       const picked=[];
-      for(const it of row.items)for(const a of it.aw||[])if(a.y===year&&a.c===cat)picked.push({it,won:a.w?1:0});
+      for(const it of AWITEMS)for(const a of it.aw||[])if(a.y===year&&a.c===cat)picked.push({it,won:a.w?1:0});
       if(!picked.length)continue;
       picked.sort((a,b)=>b.won-a.won||b.it.r-a.it.r);
       const total=(row.totals||{})[year+"|"+cat]||picked.length;
@@ -312,7 +320,7 @@ function buildAwardRows(){
     }
   }else{
     const picked=[]; let total=0;
-    for(const cat of row.cats){total+=(row.totals||{})[year+"|"+cat]||0;for(const it of row.items)for(const a of it.aw||[])if(a.y===year&&a.c===cat)picked.push({it,c:cat})}
+    for(const cat of row.cats){total+=(row.totals||{})[year+"|"+cat]||0;for(const it of AWITEMS)for(const a of it.aw||[])if(a.y===year&&a.c===cat)picked.push({it,c:cat})}
     out.push(`<div class="arow"><h3>${esc(row.name)} ${year}<small>${picked.length} de ${total} premiados nos seus serviços</small></h3><div class="scroller">${picked.map(p=>
       poster(p.it,awardStrips({t:p.c,w:true,i:row.icon},p.it,row.icon),line(p.it))).join("")}</div></div>`);
   }
@@ -365,6 +373,10 @@ $("filters").onclick=openPanel;
 $("shuffle").onclick=()=>{if(!current.length)return toast("Nada para sortear aqui.",true);openTitle(current[Math.floor(Math.random()*current.length)])};
 $("searchForm").onsubmit=async e=>{e.preventDefault();const q=$("q").value.trim();if(!q)return;
   const d=await api("/api/roku/search?q="+encodeURIComponent(q));Object.assign(DET,d.details||{});SEARCH={q,items:d.items||[]};opts.search=defaults("search");$("q").blur();go("#s/"+encodeURIComponent(q))};
+$("unseen").checked=UNSEEN;
+$("unseen").onchange=()=>{UNSEEN=$("unseen").checked;try{localStorage.setItem("unseen",UNSEEN?"1":"0")}catch{}
+  for(const k in opts)opts[k].seen=UNSEEN?1:0;
+  showHome()};
 $("sheet").onclick=e=>{if(e.target.id==="sheet")$("sheet").classList.remove("open")};
 document.addEventListener("keydown",e=>{if(e.key==="Escape")$("sheet").classList.remove("open")});
 $("sync").onclick=async()=>{await api("/api/sync",{});toast("Atualizando listas e disponibilidade…");pollWas=true;setTimeout(pollStatus,800)};

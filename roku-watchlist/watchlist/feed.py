@@ -170,8 +170,10 @@ def roku_home(have=""):
     for r in feed["rows"]:
         _, v = feed["_rows"][r["id"]]
         items = r["items"] if r["id"] in ("new", "recent") else sorted(r["items"], key=lambda i: -i["r"])
+        unseen = [i for i in items if not i["mine"]]          # sem nota sua no IMDb
         rows.append({"id": r["id"], "name": r["name"], "total": r["total"], "award": r["award"],
-                     "count": len(r["items"]), "v": v, "covers": [i["poster"] for i in items[:3]]})
+                     "count": len(r["items"]), "v": v, "covers": [i["poster"] for i in items[:3]],
+                     "unseen": len(unseen), "coversUnseen": [i["poster"] for i in unseen[:3]]})
     home = {"rows": rows, "status": feed["status"], "server": feed["server"]}
     version = _hash(home)
     if have and have == version:
