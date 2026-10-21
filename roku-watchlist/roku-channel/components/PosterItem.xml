@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Um pôster: capa, selos discretos (IMDb, minha nota), RT acima da faixa do prêmio, título e ano/serviços. -->
+<!-- Um pôster: capa, selos discretos (IMDb, minha nota), RT acima das faixas de prêmio (até duas), título e ano/serviços. -->
 <component name="PosterItem" extends="Group">
   <interface>
     <field id="itemContent" type="node" onChange="showContent" />
@@ -27,6 +27,15 @@
       <Poster uri="pkg:/images/rt_popcorn.png" translation="[80,5]" width="20" height="20" />
       <Label id="rtA" translation="[103,0]" width="48" height="30" vertAlign="center" color="0xFFFFFFFF">
         <Font role="font" uri="font:BoldSystemFontFile" size="19" />
+      </Label>
+    </Group>
+
+    <Group id="strip2" translation="[0,266]">
+      <Rectangle id="strip2Bg" width="220" height="32" />
+      <Rectangle id="strip2Line" width="220" height="2" color="0xE3C16FFF" />
+      <Poster id="strip2Icon" translation="[8,7]" width="18" height="18" />
+      <Label id="strip2Text" translation="[32,0]" width="182" height="32" vertAlign="center">
+        <Font role="font" uri="font:BoldSystemFontFile" size="15" />
       </Label>
     </Group>
 

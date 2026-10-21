@@ -133,6 +133,7 @@ sub applyFeed(data as object)
             it.genres = it.genreList.Join(", ")
             it.directors = it.directorList.Join(", ")
             it.sortTitle = LCase(it.title)
+            if it.strips = invalid then it.strips = []      ' cópia guardada de um build antigo
             ' o servidor manda só o código da imagem do IMDb
             if it.poster <> "" and Left(it.poster, 4) <> "http" then
                 it.poster = "https://m.media-amazon.com/images/M/" + it.poster + "._V1_QL75_UX300_.jpg"
@@ -291,7 +292,7 @@ sub rebuildView()
         else if s.field = "rtSort" and it.runtime > 0 then
             line = formatRuntime(it.runtime) + "  ·  " + line
         end if
-        addPosterNode(root, it, line, it.strip)
+        addPosterNode(root, it, line, it.strips)
     end for
     m.grid.content = root
     if view.Count() > 0 then
@@ -326,7 +327,18 @@ function activeFilters() as string
 end function
 
 ' Um pôster: capa, notas e a faixa do prêmio (strip = { t, w, i }).
-sub addPosterNode(parent as object, it as object, line as string, strip as object)
+' Tarjas de um pôster nas fileiras de prêmio: a do prêmio da fileira primeiro (first),
+' depois as de outros festivais em que o filme venceu, sem repetir o ícone skipIcon.
+function awardStrips(first as dynamic, it as object, skipIcon as string) as object
+    s = []
+    if first <> invalid then s.Push(first)
+    for each x in it.strips
+        if s.Count() < 2 and x.w = true and x.i <> skipIcon then s.Push(x)
+    end for
+    return s
+end function
+
+sub addPosterNode(parent as object, it as object, line as string, strips as object)
     node = parent.createChild("ContentNode")
     node.title = it.title
     node.HDPosterUrl = it.poster
@@ -334,7 +346,18 @@ sub addPosterNode(parent as object, it as object, line as string, strip as objec
     node.ShortDescriptionLine2 = line
     mineText = ""
     if it.mine > 0 then mineText = "Eu " + it.mine.ToStr()
-    node.addFields({ mineText: mineText, rtC: it.rtC, rtA: it.rtA, stripText: strip.t, stripWon: strip.w, stripIcon: strip.i })
+    f = { mineText: mineText, rtC: it.rtC, rtA: it.rtA, stripText: "", stripWon: false, stripIcon: "", strip2Text: "", strip2Won: false, strip2Icon: "" }
+    if strips.Count() > 0 then
+        f.stripText = strips[0].t
+        f.stripWon = strips[0].w
+        f.stripIcon = strips[0].i
+    end if
+    if strips.Count() > 1 then
+        f.strip2Text = strips[1].t
+        f.strip2Won = strips[1].w
+        f.strip2Icon = strips[1].i
+    end if
+    node.addFields(f)
 end sub
 
 sub onGridFocused()
@@ -781,14 +804,13 @@ sub buildAwardRows(year as string)
                 rowNode.title = cat + "      " + picked.Count().ToStr() + " de " + total.ToStr() + " indicados nos seus serviços"
                 items = []
                 for each p in picked
-                    ' venceu nesta categoria: "Venceu"; senão, o prêmio que o filme ganhou em outra
-                    strip = { t: "", w: false, i: "" }
+                    ' venceu nesta categoria: "Venceu" e os outros festivais; senão, os prêmios que ganhou
                     if p.won = 1 then
-                        strip = { t: "Venceu", w: true, i: "trophy" }
-                    else if p.it.strip.w = true then
-                        strip = p.it.strip
+                        strips = awardStrips({ t: "Venceu", w: true, i: "trophy" }, p.it, "trophy")
+                    else
+                        strips = awardStrips(invalid, p.it, "")
                     end if
-                    addPosterNode(rowNode, p.it, p.it.year + "  ·  " + p.it.services.Join(" · "), strip)
+                    addPosterNode(rowNode, p.it, p.it.year + "  ·  " + p.it.services.Join(" · "), strips)
                     items.Push(p.it)
                 end for
                 m.awardView.Push(items)
@@ -810,7 +832,7 @@ sub buildAwardRows(year as string)
         rowNode.title = row.name + " " + year + "      " + picked.Count().ToStr() + " de " + total.ToStr() + " premiados nos seus serviços"
         items = []
         for each p in picked
-            addPosterNode(rowNode, p.it, p.it.year + "  ·  " + p.it.services.Join(" · "), { t: p.c, w: true, i: row.icon })
+            addPosterNode(rowNode, p.it, p.it.year + "  ·  " + p.it.services.Join(" · "), awardStrips({ t: p.c, w: true, i: row.icon }, p.it, row.icon))
             items.Push(p.it)
         end for
         m.awardView.Push(items)

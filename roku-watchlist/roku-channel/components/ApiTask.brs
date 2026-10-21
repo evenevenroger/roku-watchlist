@@ -21,7 +21,7 @@ sub doWork()
         ' manda a versão da cópia guardada: se nada mudou, o PC responde só {same: true}
         have = ""
         if m.top.body = invalid or m.top.body.full <> true then have = ReadAsciiFile(versionPath())
-        text = request("GET", serverUrl() + "/api/roku?fmt=2&v=" + have, "", 25000)
+        text = request("GET", serverUrl() + "/api/roku?fmt=3&v=" + have, "", 25000)
         data = invalid
         if text <> invalid then data = ParseJson(text)
         if data = invalid then

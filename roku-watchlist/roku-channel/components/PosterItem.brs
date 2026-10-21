@@ -14,6 +14,11 @@ sub init()
     m.stripLine = m.top.findNode("stripLine")
     m.stripIcon = m.top.findNode("stripIcon")
     m.stripText = m.top.findNode("stripText")
+    m.strip2 = m.top.findNode("strip2")
+    m.strip2Bg = m.top.findNode("strip2Bg")
+    m.strip2Line = m.top.findNode("strip2Line")
+    m.strip2Icon = m.top.findNode("strip2Icon")
+    m.strip2Text = m.top.findNode("strip2Text")
 end sub
 
 function field(c as object, name as string, fallback as dynamic) as dynamic
@@ -35,25 +40,11 @@ sub showContent()
     m.mine.text = mine
     m.mineBg.visible = (mine <> "")
 
-    ' faixa do prêmio no pé do pôster
+    ' faixas de prêmio no pé do pôster: a primeira embaixo, a segunda logo acima
     stripText = field(c, "stripText", "")
-    m.strip.visible = (stripText <> "")
-    if stripText <> "" then
-        won = field(c, "stripWon", false)
-        icon = field(c, "stripIcon", "trophy")
-        m.stripText.text = UCase(stripText)
-        if won then
-            m.stripBg.color = "0xE3C16FFF"
-            m.stripText.color = "0x2A2008FF"
-            m.stripLine.visible = false
-            m.stripIcon.uri = "pkg:/images/" + icon + "_dark.png"
-        else
-            m.stripBg.color = "0x0E0F13E0"
-            m.stripText.color = "0xE3C16FFF"
-            m.stripLine.visible = true
-            m.stripIcon.uri = "pkg:/images/" + icon + "_gold.png"
-        end if
-    end if
+    strip2Text = field(c, "strip2Text", "")
+    paintStrip(m.strip, m.stripBg, m.stripLine, m.stripIcon, m.stripText, stripText, field(c, "stripWon", false), field(c, "stripIcon", "trophy"))
+    paintStrip(m.strip2, m.strip2Bg, m.strip2Line, m.strip2Icon, m.strip2Text, strip2Text, field(c, "strip2Won", false), field(c, "strip2Icon", "trophy"))
 
     ' Rotten Tomatoes logo acima da faixa (ou no pé, se não houver faixa)
     rtC = field(c, "rtC", "")
@@ -62,11 +53,30 @@ sub showContent()
     if m.rt.visible then
         m.rtC.text = pct(rtC)
         m.rtA.text = pct(rtA)
-        if stripText <> "" then
+        if strip2Text <> "" then
+            m.rt.translation = [8, 232]
+        else if stripText <> "" then
             m.rt.translation = [8, 264]
         else
             m.rt.translation = [8, 292]
         end if
+    end if
+end sub
+
+sub paintStrip(group as object, bg as object, line as object, icon as object, label as object, text as string, won as boolean, iconName as string)
+    group.visible = (text <> "")
+    if text = "" then return
+    label.text = UCase(text)
+    if won then
+        bg.color = "0xE3C16FFF"
+        label.color = "0x2A2008FF"
+        line.visible = false
+        icon.uri = "pkg:/images/" + iconName + "_dark.png"
+    else
+        bg.color = "0x0E0F13E0"
+        label.color = "0xE3C16FFF"
+        line.visible = true
+        icon.uri = "pkg:/images/" + iconName + "_gold.png"
     end if
 end sub
 

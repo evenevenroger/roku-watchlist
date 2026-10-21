@@ -12,6 +12,12 @@ from .common import CHANNEL_DIR, CONFIG, lan_ip
 from .data import build_payload
 
 
+# nomes curtos para quando várias categorias dividem a mesma tarja
+SHORT_CAT = {"Melhor filme": "Filme", "Filme internacional": "Internacional", "Grande Prêmio do Júri": "Júri",
+             "Prêmio do Júri": "Júri", "Prêmio Especial do Júri": "Júri especial", "Prêmio do Público": "Público",
+             "Júri internacional": "Júri intern.", "Público internacional": "Público intern."}
+
+
 def award_fields(t, list_id):
     """Prêmios do título. Nas listas de prêmio, só os daquele prêmio (para filtrar);
     o texto da ficha sempre mostra todos."""
@@ -34,22 +40,23 @@ def award_fields(t, list_id):
                 a["c"] + (" (venceu)" if a["w"] else " (indicado)" if group == "oscar" else ""))
         row_text = "   ·   ".join(f'{AWARD_NAMES.get(group, group)} {y or ""}: ' + ", ".join(v)
                                    for y, v in sorted(by_year.items(), reverse=True))
-    # tarja do pôster: o prêmio mais importante que o filme ganhou
-    # (festivais na ordem de AWARD_NAMES; dentro de cada um, na ordem das categorias)
-    strip = {"t": "", "w": False, "i": ""}
+    # tarjas do pôster: uma por festival em que o filme venceu (no máximo duas), na ordem de
+    # AWARD_NAMES; várias categorias do mesmo festival viram um texto só, com nomes curtos
+    strips = []
     for g in AWARD_NAMES:
         order = [c for c, _ in AWARDS[g][2]]
-        won = sorted((a for a in aw.get(g, []) if a["w"]), key=lambda a: order.index(a["c"]) if a["c"] in order else 99)
-        if won:
-            strip = {"t": won[0]["c"], "w": True, "i": AWARD_ICONS[g]}
-            break
-    else:
-        if aw.get("oscar"):
-            strip = {"t": "Indicado", "w": False, "i": "trophy"}
+        won = sorted({a["c"] for a in aw.get(g, []) if a["w"]}, key=lambda c: order.index(c) if c in order else 99)
+        if won and len(strips) < 2:
+            text = won[0] if len(won) == 1 else " + ".join(SHORT_CAT.get(c, c) for c in won)
+            strips.append({"t": text, "w": True, "i": AWARD_ICONS[g]})
+    if not strips and aw.get("oscar"):
+        strips.append({"t": "Indicado", "w": False, "i": "trophy"})
+    strip = strips[0] if strips else {"t": "", "w": False, "i": ""}
     # prêmios que não são o da lista atual (vão para a faixa de informações)
     other = [ln for ln in lines if not (group and ln.startswith(AWARD_NAMES.get(group, group) + " "))]
     return {
-        "strip": strip,
+        "strip": strip,                         # canal até o build 8
+        "strips": strips,
         "awardOtherText": ("Também: " if group else "Prêmios: ") + "; ".join(other) if other else "",
         "awardRowText": row_text,
         "awardText": "   ·   ".join(lines),
@@ -95,6 +102,8 @@ def roku_feed(fmt=1, have=""):
     for r in feed["rows"]:
         for it in r["items"]:
             it.pop("awardOtherText", None)
+            if fmt >= 3:
+                it.pop("strip", None)
             p = it.get("poster") or ""
             if p.startswith(POSTER_PRE) and p.endswith(POSTER_SUF):
                 it["poster"] = p[len(POSTER_PRE):-len(POSTER_SUF)]
