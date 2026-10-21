@@ -4,6 +4,7 @@ import logging
 import os
 import socket
 import threading
+import time
 from logging.handlers import RotatingFileHandler
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -31,7 +32,15 @@ def save_json(path, data):
     tmp = f"{path}.{threading.get_ident()}.tmp"   # um temporário por thread
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False)
-    os.replace(tmp, path)
+    # no Windows, substituir falha enquanto outra thread lê o arquivo: espera e tenta de novo
+    for attempt in range(10):
+        try:
+            os.replace(tmp, path)
+            return
+        except PermissionError:
+            if attempt == 9:
+                raise
+            time.sleep(0.2)
 
 
 CONFIG = load_json(CONFIG_PATH, {})

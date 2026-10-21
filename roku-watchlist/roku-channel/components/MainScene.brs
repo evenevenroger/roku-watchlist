@@ -68,6 +68,7 @@ sub init()
 
     m.loaded = {}          ' listas já carregadas nesta sessão (id -> true)
     m.rowLoading = ""      ' lista sendo carregada agora
+    m.nextRow = ""         ' cartão escolhido enquanto outra lista carregava
     m.posterQueue = []     ' capas a guardar no Roku
     m.posterQueued = {}
     m.posterQueued.SetModeCaseSensitive()
@@ -122,7 +123,7 @@ end sub
 
 sub onFeedError()
     if m.feed = invalid then
-        m.message.text = m.feedTask.error
+        m.message.text = m.feedTask.error + Chr(10) + "Aperte OK para tentar de novo."
         return
     end if
     m.offline = true
@@ -132,6 +133,7 @@ end sub
 sub onFeed()
     m.offline = false
     data = m.feedTask.result
+    if data = invalid then return
     if data.DoesExist("same") then
         ' nada mudou desde a cópia guardada: não precisa montar tudo de novo
         if m.feed <> invalid then
@@ -159,7 +161,9 @@ sub applyFeed(data as object)
     m.listKey = ""
     m.awardKey = ""
     if m.feed.rows.Count() = 0 then
+        m.home.content = CreateObject("roSGNode", "ContentNode")
         m.message.text = "Nenhum título das suas listas está nos seus serviços."
+        m.message.visible = true
         return
     end if
     root = CreateObject("roSGNode", "ContentNode")
@@ -233,9 +237,11 @@ sub flushPosters()
 end sub
 
 sub onPostersSaved()
-    for each code in m.posterTask.result.codes
+    r = m.posterTask.result
+    for each code in r.codes
         m.posterCache[code.Replace("@", "_")] = true
     end for
+    if r.left <> invalid then m.posterQueue.Append(r.left)
     m.posterTask = invalid
     flushPosters()
 end sub
@@ -291,7 +297,11 @@ sub onHomeSelected()
 end sub
 
 sub startRowLoad(row as object)
-    if m.rowLoading <> "" then return
+    if m.rowLoading <> "" then
+        m.nextRow = row.id        ' abre este quando o carregamento atual terminar
+        return
+    end if
+    m.nextRow = "" 
     m.rowLoading = row.id
     m.subtitle.text = "Abrindo " + row.name + "..."
     m.rowTask = CreateObject("roSGNode", "ApiTask")
@@ -321,17 +331,33 @@ sub onRowLoaded()
     for each k in data.details
         m.feed.details[k] = data.details[k]
     end for
-    m.loaded[id] = true
+    if data.v = row.v then m.loaded[id] = true     ' cópia de outra versão: recarrega na próxima vez
     flushPosters()
-    if m.screen = "home" then
-        m.subtitle.text = statusText()
-        m.rowIndex = idx
-        openRow()
+    if m.screen <> "home" then return
+    m.subtitle.text = statusText()
+    if m.nextRow <> "" and m.nextRow <> id then
+        nxt = m.nextRow
+        m.nextRow = ""
+        for i = 0 to m.feed.rows.Count() - 1
+            if m.feed.rows[i].id = nxt then
+                m.rowIndex = i
+                if m.loaded.DoesExist(nxt) then
+                    openRow()
+                else
+                    startRowLoad(m.feed.rows[i])
+                end if
+                return
+            end if
+        end for
+        return
     end if
+    m.rowIndex = idx
+    openRow()
 end sub
 
 sub onRowError()
     m.rowLoading = ""
+    m.nextRow = ""
     m.subtitle.text = m.rowTask.error
 end sub
 
@@ -779,18 +805,22 @@ sub onButtonSelected()
     idx = m.dButtons.buttonSelected
     if m.currentDetails.play <> invalid and idx < m.currentDetails.play.Count() then steps = m.currentDetails.play[idx]
     m.playTask.body = { id: m.current.id, service: service, steps: steps }
+    m.playCtx = { id: m.current.id, title: m.current.title, direct: (m.current.direct[idx] = true) }
     m.playTask.control = "RUN"
 end sub
 
 sub onPlayResult()
     r = m.playTask.result
+    ctx = m.playCtx
+    ' a ficha mudou enquanto o PC respondia: o aviso não é deste título
+    if ctx = invalid or m.current = invalid or m.current.id <> ctx.id then return
     if r.ok = true then
         if r.local = true then
             m.dStatus.text = "Abrindo direto pelo Roku (o computador não respondeu)..."
-        else if m.current.direct[m.dButtons.buttonSelected] then
+        else if ctx.direct then
             m.dStatus.text = "Abrindo... (alguns serviços levam até 30 segundos)"
         else
-            m.dStatus.text = "Abrindo o app. Procure por: " + m.current.title
+            m.dStatus.text = "Abrindo o app. Procure por: " + ctx.title
         end if
     else
         m.dStatus.text = "Não deu certo: " + r.error
@@ -805,6 +835,11 @@ end sub
 
 function onKeyEvent(key as string, press as boolean) as boolean
     if not press then return false
+    if m.feed = invalid and key = "OK" and m.feedTask.state <> "run" then
+        m.message.text = "Tentando de novo..."
+        startFeed(false)
+        return true
+    end if
     if m.screen = "home" and key = "options" and m.feed <> invalid then
         openSearch()
         return true

@@ -39,9 +39,15 @@ def sync(force_offers=False):
                     # prêmios mudam uma vez por ano: reaproveita o que já foi lido neste mês
                     lists[L["id"]] = cache["lists"][L["id"]]
                     continue
-                awards = fetch_awards(group)
-                state["step"] = f"Buscando {len(awards)} filmes do {L['name']} no IMDb"
-                items = fetch_titles(awards)
+                try:
+                    awards = fetch_awards(group)
+                    state["step"] = f"Buscando {len(awards)} filmes do {L['name']} no IMDb"
+                    items = fetch_titles(awards)
+                except Exception:  # noqa: BLE001 — fica a cópia anterior; relê na próxima
+                    log.exception("não consegui reler %s; mantenho a cópia anterior", L["name"])
+                    if L["id"] in (cache.get("lists") or {}):
+                        lists[L["id"]] = cache["lists"][L["id"]]
+                    continue
                 cache.setdefault("awards", {})[group] = awards
                 cache.setdefault("awards_at", {})[group] = time.time()
                 cache.setdefault("awards_cats", {})[group] = cats
@@ -142,8 +148,10 @@ def track_availability(cache, ids):
             continue
         current = {service_for(off["tech"] or "") for off in o.get("offers", [])
                    if off["kind"] not in ("RENT", "BUY")} - {None}
+        # título consultado pela 1ª vez: não sabemos quando chegou, então não é novidade
+        known = not first_time and tid in avail
         seen = avail.get(tid, {})
-        avail[tid] = {s: seen.get(s, 0 if first_time else now) for s in current}
+        avail[tid] = {s: seen.get(s, now if known else 0) for s in current}
 
 
 def build_payload():

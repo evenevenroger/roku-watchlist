@@ -56,16 +56,20 @@ sub doWork()
         savePosters(m.top.body.codes)
     else if mode = "play" then
         body = m.top.body
-        text = request("POST", serverUrl() + "/api/play_title", FormatJson({ id: body.id, service: body.service }), 8000)
-        if text = invalid and relocateServer() then text = request("POST", serverUrl() + "/api/play_title", FormatJson({ id: body.id, service: body.service }), 8000)
-        if text <> invalid then
-            data = ParseJson(text)
-            if data <> invalid then
-                m.top.result = data
-                return
-            end if
+        payload = FormatJson({ id: body.id, service: body.service })
+        res = requestFull("POST", serverUrl() + "/api/play_title", payload, 20000)
+        if res.code = 0 and relocateServer() then res = requestFull("POST", serverUrl() + "/api/play_title", payload, 20000)
+        if res.code <> 0 then
+            ' o PC respondeu (mesmo com erro): não abre de novo por conta própria
+            data = ParseJson(res.text)
+            if data = invalid then data = { ok: false, error: "O computador respondeu com erro (" + res.code.ToStr() + ")." }
+            data.id = body.id
+            m.top.result = data
+            return
         end if
-        m.top.result = playWithoutPC(body.steps)
+        data = playWithoutPC(body.steps)
+        data.id = body.id
+        m.top.result = data
     end if
 end sub
 
@@ -105,24 +109,36 @@ sub savePosters(codes as object)
     fs = CreateObject("roFileSystem")
     if not fs.Exists("cachefs:/p") then fs.CreateDirectory("cachefs:/p")
     done = []
-    xfer = CreateObject("roUrlTransfer")
-    xfer.SetCertificatesFile("common:/certs/ca-bundle.crt")    ' as capas vêm por HTTPS
-    xfer.InitClientCertificates()
+    left = []
+    port = CreateObject("roMessagePort")
     for each code in codes
-        if done.Count() >= 300 then exit for
-        file = posterFile(code)
-        if not fs.Exists(file) then
-            xfer.SetUrl(posterWeb(code))
-            if xfer.GetToFile(file) = 200 then
+        if done.Count() >= 300 then
+            left.Push(code)          ' volta para a fila na próxima rodada
+        else
+            file = posterFile(code)
+            if fs.Exists(file) then
                 done.Push(code)
             else
-                DeleteFile(file)      ' não deixa capa pela metade passar por guardada
+                xfer = CreateObject("roUrlTransfer")
+                xfer.SetCertificatesFile("common:/certs/ca-bundle.crt")    ' as capas vêm por HTTPS
+                xfer.InitClientCertificates()
+                xfer.SetMessagePort(port)
+                xfer.SetUrl(posterWeb(code))
+                ok = false
+                if xfer.AsyncGetToFile(file) then
+                    msg = wait(10000, port)              ' uma capa travada não para a fila
+                    if type(msg) = "roUrlEvent" and msg.GetResponseCode() = 200 then ok = true
+                    if not ok then xfer.AsyncCancel()
+                end if
+                if ok then
+                    done.Push(code)
+                else
+                    DeleteFile(file)      ' não deixa capa pela metade passar por guardada
+                end if
             end if
-        else
-            done.Push(code)
         end if
     end for
-    m.top.result = { codes: done }
+    m.top.result = { codes: done, left: left }
 end sub
 
 ' O PC não respondeu no endereço conhecido: procura na rede e guarda se achar em outro.
@@ -143,6 +159,23 @@ end function
 
 function rowPath(id as string) as string
     return "cachefs:/row_" + id.Replace(":", "_") + ".json"
+end function
+
+' Como request, mas diz se houve resposta: code = 0 quando nada respondeu.
+function requestFull(method as string, url as string, body as string, timeoutMs as integer) as object
+    xfer = CreateObject("roUrlTransfer")
+    port = CreateObject("roMessagePort")
+    xfer.SetMessagePort(port)
+    xfer.SetUrl(url)
+    xfer.AddHeader("Content-Type", "application/json")
+    xfer.EnableEncodings(true)
+    xfer.RetainBodyOnError(true)
+    xfer.SetRequest(method)
+    if not xfer.AsyncPostFromString(body) then return { code: 0, text: "" }
+    msg = wait(timeoutMs, port)
+    if type(msg) = "roUrlEvent" and msg.GetResponseCode() > 0 then return { code: msg.GetResponseCode(), text: msg.GetString() }
+    xfer.AsyncCancel()
+    return { code: 0, text: "" }
 end function
 
 ' Requisição com tempo-limite; devolve o corpo ou invalid.
