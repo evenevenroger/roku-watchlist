@@ -48,10 +48,13 @@ AWARDS = {
             t == "Silver Lion" and c == "Grand Jury Prize")),
         ("Prêmio Especial do Júri", lambda t, c, y=0: t == "Special Jury Prize" and c == ""),
     ]),
-    # Sundance: competição americana de ficção ("Dramatic"; "U.S. Dramatic" no prêmio do público desde 2022)
+    # Sundance: competições de ficção, americana e internacional ("Dramatic"; "U.S. Dramatic" no prêmio do público desde 2022)
     "sundance": ("ev0000631", True, [
         ("Grande Prêmio do Júri", lambda t, c, y=0: t == "Grand Jury Prize" and c == "Dramatic"),
         ("Prêmio do Público", lambda t, c, y=0: t == "Audience Award" and c in ("Dramatic", "U.S. Dramatic")),
+        # competição internacional de ficção (World Cinema Dramatic), desde 2004-05
+        ("Júri internacional", lambda t, c, y=0: t == "Grand Jury Prize" and c == "World Cinema - Dramatic"),
+        ("Público internacional", lambda t, c, y=0: t == "Audience Award" and c == "World Cinema - Dramatic"),
     ]),
 }
 def festival_top(year):
