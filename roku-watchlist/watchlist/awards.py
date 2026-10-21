@@ -97,4 +97,4 @@ def fetch_awards(group):
 
 AWARD_NAMES = {"oscar": "Oscar", "cannes": "Cannes", "veneza": "Veneza", "berlim": "Berlim"}
 # ícone da faixa do pôster de cada prêmio (roku-channel/images/<ícone>_dark|_gold.png)
-AWARD_ICONS = {"oscar": "trophy", "cannes": "palm", "veneza": "medal", "berlim": "medal"}
+AWARD_ICONS = {"oscar": "trophy", "cannes": "palm", "veneza": "lion", "berlim": "bear"}
