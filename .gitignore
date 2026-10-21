@@ -1,0 +1,5 @@
+# gerados pelo servidor
+roku-watchlist/data/
+roku-watchlist/MinhaWatchlist.zip
+__pycache__/
+*.pyc

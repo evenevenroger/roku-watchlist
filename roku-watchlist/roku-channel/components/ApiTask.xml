@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Faz as chamadas HTTP ao servidor do PC fora da thread de interface. -->
+<component name="ApiTask" extends="Task">
+  <interface>
+    <field id="mode" type="string" />
+    <field id="body" type="assocarray" />
+    <field id="result" type="assocarray" />
+    <field id="error" type="string" />
+  </interface>
+  <script type="text/brightscript" uri="pkg:/components/config.brs" />
+  <script type="text/brightscript" uri="pkg:/components/ApiTask.brs" />
+</component>

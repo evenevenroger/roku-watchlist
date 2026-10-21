@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e0f13">
+<title>Watchlist → Roku</title>
+<style>
+:root{--bg:#0e0f13;--panel:#171920;--panel2:#20232c;--line:#2b2f3a;--text:#eceef3;--mute:#9aa0ad;--accent:#6c3ff5;--ok:#2fbf71;--err:#e5484d;--r:12px}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button,select,input{font:inherit;color:inherit}
+header{position:sticky;top:0;z-index:5;background:rgba(14,15,19,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:10px 16px}
+.top{display:flex;align-items:center;gap:10px}
+h1{font-size:17px;margin:0;font-weight:650;letter-spacing:.2px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+h1 span{color:var(--accent)}
+.btn{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:#3d4250}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.controls select,.controls input{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0}
+.controls input{flex:1 1 180px}
+.controls select{flex:0 1 auto;max-width:100%}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:10px 0 2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:5px 11px;font-size:13px;cursor:pointer;color:var(--mute)}
+.chip.on{color:#fff;border-color:transparent;background:var(--c,var(--accent))}
+.toggle{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--mute);cursor:pointer;user-select:none}
+.toggle input{accent-color:var(--accent);width:16px;height:16px}
+.status{font-size:12px;color:var(--mute);padding:6px 16px 0}
+.bar{height:3px;background:var(--line);border-radius:3px;margin-top:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .4s}
+main{padding:14px 16px 90px}
+.count{color:var(--mute);font-size:13px;margin:0 0 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:14px}
+@media (max-width:420px){.grid{grid-template-columns:repeat(3,1fr);gap:10px}}
+@media (max-width:600px){header{position:static}}
+.card .pos img{width:100%;height:100%;object-fit:cover;display:block}
+.card{cursor:pointer;border-radius:var(--r);overflow:hidden;background:var(--panel);position:relative;transition:transform .15s}
+.card:hover{transform:translateY(-2px)}
+.card .pos{aspect-ratio:2/3;background:#22252e center/cover no-repeat;display:flex;align-items:flex-end}
+.card .noimg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding:8px;text-align:center;color:var(--mute);font-size:12px}
+.card .rt{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.72);border-radius:6px;padding:1px 6px;font-size:12px;font-weight:600;color:#f5c518}
+.card .svc{position:absolute;bottom:6px;left:6px;right:6px;display:flex;flex-wrap:wrap;gap:3px}
+.dot{font-size:10px;font-weight:700;border-radius:5px;padding:1px 5px;background:var(--c);color:#fff;box-shadow:0 1px 3px rgba(0,0,0,.5)}
+.card .meta{padding:6px 8px 8px}
+.card .t{font-size:13px;font-weight:600;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card .y{font-size:12px;color:var(--mute)}
+.empty{color:var(--mute);text-align:center;padding:60px 10px}
+/* detalhe */
+.sheet{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center}
+.sheet.open{display:flex}
+.sheet .box{background:var(--panel);width:min(720px,100%);max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
+@media (min-width:760px){.sheet{align-items:center}.sheet .box{border-radius:18px}}
+.d-head{display:flex;gap:14px}
+.d-head img{width:110px;border-radius:10px;flex:none;align-self:flex-start}
+.d-head h2{margin:0 0 4px;font-size:20px;line-height:1.2}
+.d-sub{color:var(--mute);font-size:13px}
+.d-plot{margin:12px 0;color:#cfd3dc;font-size:14px}
+.d-actions{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.play{display:flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;padding:13px;font-weight:650;color:#fff;background:var(--c);cursor:pointer;font-size:15px}
+.play:disabled{opacity:.6}
+.alt{font-size:13px;color:var(--mute);margin-top:6px}
+.links{display:flex;gap:14px;margin-top:14px;font-size:13px}
+.links a{color:var(--mute)}
+.close{float:right;background:none;border:0;color:var(--mute);font-size:26px;line-height:1;cursor:pointer;padding:0 4px}
+/* controle remoto */
+.remote{position:fixed;right:16px;bottom:16px;z-index:15}
+.fab{width:54px;height:54px;border-radius:50%;background:var(--accent);border:0;color:#fff;font-size:22px;box-shadow:0 6px 18px rgba(0,0,0,.5);cursor:pointer}
+.pad{display:none;position:absolute;right:0;bottom:66px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px;width:220px;box-shadow:0 10px 30px rgba(0,0,0,.6)}
+.remote.open .pad{display:block}
+.pad .g{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.pad button{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 0;cursor:pointer;font-size:15px}
+.pad button.ok{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.pad .sep{height:8px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(120px);background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 14px;z-index:30;transition:transform .25s;max-width:calc(100% - 32px);font-size:14px}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.err{border-color:var(--err)}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <h1>Watchlist <span>→</span> Roku</h1>
+    <button class="btn" id="shuffle" title="Sortear um título da seleção">🎲 Sortear</button>
+    <button class="btn" id="sync" title="Atualizar listas e disponibilidade">↻</button>
+  </div>
+  <div class="controls">
+    <select id="list"></select>
+    <select id="type">
+      <option value="all">Filmes e séries</option>
+      <option value="movie">Só filmes</option>
+      <option value="series">Só séries</option>
+    </select>
+    <select id="sort">
+      <option value="pos">Ordem da lista</option>
+      <option value="rating">Nota IMDb</option>
+      <option value="mine">Minha nota</option>
+      <option value="lang">Idioma</option>
+      <option value="new">Mais recentes</option>
+      <option value="old">Mais antigos</option>
+      <option value="short">Mais curtos</option>
+      <option value="title">Título A–Z</option>
+    </select>
+    <select id="lang"><option value="">Todos os idiomas</option></select>
+    <input id="q" type="search" placeholder="Buscar título…">
+  </div>
+  <div class="chips" id="chips"></div>
+  <label class="toggle"><input type="checkbox" id="mineOnly" checked> Só o que está nos meus serviços</label>
+</header>
+<div class="status" id="status"></div>
+<main>
+  <p class="count" id="count"></p>
+  <div class="grid" id="grid"></div>
+</main>
+
+<div class="sheet" id="sheet"><div class="box" id="box"></div></div>
+
+<div class="remote" id="remote">
+  <div class="pad">
+    <div class="g">
+      <button data-k="Back">↩</button><button data-k="Up">▲</button><button data-k="Home">⌂</button>
+      <button data-k="Left">◀</button><button data-k="Select" class="ok">OK</button><button data-k="Right">▶</button>
+      <button data-k="InstantReplay">⟲</button><button data-k="Down">▼</button><button data-k="Info">✱</button>
+    </div>
+    <div class="sep"></div>
+    <div class="g">
+      <button data-k="Rev">⏪</button><button data-k="Play">⏯</button><button data-k="Fwd">⏩</button>
+      <button data-k="VolumeDown">🔉</button><button data-k="VolumeMute">🔇</button><button data-k="VolumeUp">🔊</button>
+    </div>
+  </div>
+  <button class="fab" id="fab" title="Controle remoto">🎮</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const COLORS={"Netflix":"#e50914","Prime Video":"#1399ff","Universal+":"#4b5bdc","Filmelier":"#d9822b","HBO Max":"#5b2bd8","Disney+":"#113ccf","Apple TV":"#55575e","Paramount+":"#0064ff"};
+const color=s=>COLORS[s]||"#444a57";
+const $=id=>document.getElementById(id);
+const store={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
+let DATA=null, byId={}, selSvc=new Set(store.get("svc",[]));
+
+function toast(msg,err,ms){const t=$("toast");t.textContent=msg;t.className="toast show"+(err?" err":"");clearTimeout(t._h);t._h=setTimeout(()=>t.className="toast",ms||3500)}
+async function api(path,body){const r=await fetch(path,body?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}:{});return r.json()}
+
+async function load(){
+  DATA=await api("/api/data"); byId={}; DATA.titles.forEach(t=>byId[t.id]=t);
+  const L=$("list"), cur=store.get("list","watchlist");
+  L.innerHTML=`<option value="__all">Todas as listas</option>`+DATA.lists.map(l=>`<option value="${l.id}">${esc(l.name.trim())} (${l.items.length})</option>`).join("");
+  L.value=[...L.options].some(o=>o.value===cur)?cur:"watchlist";
+  $("chips").innerHTML=DATA.services.map(s=>`<button class="chip${selSvc.has(s)?" on":""}" data-s="${esc(s)}" style="--c:${color(s)}">${esc(s)}</button>`).join("");
+  const lc={}; DATA.titles.forEach(t=>{if(t.lang)lc[t.lang]=(lc[t.lang]||0)+1});
+  $("lang").innerHTML=`<option value="">Todos os idiomas</option>`+Object.entries(lc).sort((a,b)=>b[1]-a[1]).map(([l,n])=>`<option value="${esc(l)}">${esc(l)} (${n})</option>`).join("");
+  ["type","sort","lang"].forEach(k=>$(k).value=store.get(k,$(k).value));
+  $("mineOnly").checked=store.get("mine",true);
+  render();
+}
+
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const isSeries=t=>/series|tvMini|tvSeries/i.test(t.type||"");
+
+function current(){
+  if(!DATA)return[];
+  const lid=$("list").value, q=$("q").value.trim().toLowerCase(), type=$("type").value, mine=$("mineOnly").checked;
+  let ids;
+  if(lid==="__all"){const s=new Set();DATA.lists.forEach(l=>l.items.forEach(i=>s.add(i)));ids=[...s]}
+  else ids=(DATA.lists.find(l=>l.id===lid)||{items:[]}).items;
+  let arr=ids.map((id,i)=>({...byId[id],_pos:i})).filter(t=>t.id);
+  if(type==="movie")arr=arr.filter(t=>!isSeries(t)); if(type==="series")arr=arr.filter(isSeries);
+  if(q)arr=arr.filter(t=>(t.title||"").toLowerCase().includes(q)||(t.original||"").toLowerCase().includes(q));
+  const lang=$("lang").value; if(lang)arr=arr.filter(t=>t.lang===lang);
+  if(mine)arr=arr.filter(t=>t.mine.length);
+  if(selSvc.size)arr=arr.filter(t=>t.mine.some(m=>selSvc.has(m.service)));
+  const s=$("sort").value, by={
+    rating:(a,b)=>(b.rating||0)-(a.rating||0), new:(a,b)=>(b.year||0)-(a.year||0), old:(a,b)=>(a.year||9999)-(b.year||9999),
+    short:(a,b)=>(a.runtime||999)-(b.runtime||999), title:(a,b)=>(a.title||"").localeCompare(b.title||"","pt"), pos:(a,b)=>a._pos-b._pos,
+    mine:(a,b)=>(b.my_rating||0)-(a.my_rating||0)||(b.rating||0)-(a.rating||0),
+    lang:(a,b)=>(a.lang||"~").localeCompare(b.lang||"~","pt")||(b.rating||0)-(a.rating||0)};
+  return arr.sort(by[s]);
+}
+
+function render(){
+  const arr=current(), g=$("grid");
+  const unchecked=DATA.titles.filter(t=>!t.checked).length;
+  $("count").textContent=`${arr.length} título${arr.length===1?"":"s"}`+(unchecked?` · ${unchecked} ainda sem consulta de disponibilidade`:"");
+  if(!arr.length){g.innerHTML=`<div class="empty" style="grid-column:1/-1">Nada por aqui com esses filtros.</div>`;return}
+  g.innerHTML=arr.slice(0,600).map(t=>`<div class="card" data-id="${t.id}">
+    <div class="pos">${t.poster?`<img loading="lazy" src="${esc(t.poster)}" alt="">`:`<div class="noimg">${esc(t.title)}</div>`}</div>
+    ${t.rating?`<span class="rt">★ ${t.rating.toFixed(1)}</span>`:""}
+    ${t.my_rating?`<span class="rt" style="left:auto;right:6px;color:#fff;background:rgba(108,63,245,.9)">Eu ${t.my_rating}</span>`:""}
+    <div class="meta"><div class="t">${esc(t.title)}</div><div class="y">${t.year||""}${isSeries(t)?" · série":""}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:4px">${t.mine.map(m=>`<span class="dot" style="--c:${color(m.service)}">${esc(m.service)}</span>`).join("")}</div></div>
+  </div>`).join("");
+}
+
+function fmtMin(m){if(!m)return"";const h=Math.floor(m/60);return h?`${h}h${String(m%60).padStart(2,"0")}`:`${m}min`}
+
+function openTitle(id){
+  const t=byId[id]; if(!t)return;
+  const btns=t.mine.map((m,i)=>`<button class="play" style="--c:${color(m.service)}" data-i="${i}">${m.direct?`▶ Assistir no ${esc(m.service)}`:m.roku==="launch/13"&&m.service!=="Prime Video"?`▶ Abrir o Prime Video (${esc(m.service)}, buscar lá)`:`▶ Abrir o ${esc(m.service)} (buscar lá)`}</button>`).join("");
+  const others=t.others.length?`<div class="alt">Também em: ${t.others.map(o=>esc(o.service)).join(", ")} (você não assina)</div>`:"";
+  const rent=t.rent?`<div class="alt">Disponível para alugar ou comprar.</div>`:"";
+  const none=!t.mine.length?`<button class="play" style="--c:#3a3f4c" data-search="1">🔍 Procurar no Roku</button>`:"";
+  $("box").innerHTML=`<button class="close" aria-label="Fechar">×</button>
+    <div class="d-head">${t.poster?`<img src="${t.poster.replace("UX300","UX400")}" alt="">`:""}
+    <div><h2>${esc(t.title)}</h2>
+      <div class="d-sub">${[t.original&&t.original!==t.title?esc(t.original):"",t.year,fmtMin(t.runtime),t.rating?"★ "+t.rating.toFixed(1):""].filter(Boolean).join(" · ")}</div>
+      <div class="d-sub">${esc((t.genres||[]).join(", "))}</div>
+      ${t.cast&&t.cast.length?`<div class="d-sub">Com ${esc(t.cast.join(", "))}</div>`:""}
+      ${Object.entries(t.awards||{}).map(([g,v])=>`<div class="d-sub" style="color:#e3c16f">${g==="oscar"?"Oscar":"Cannes"} ${v[0].y||""}: ${v.map(a=>esc(a.c)+(a.w?" (venceu)":g==="oscar"?" (indicado)":"")).join(", ")}</div>`).join("")}
+      <div class="d-sub">${[t.my_rating?`Minha nota: ${t.my_rating}`:"",
+        t.rt_critics||t.rt_audience?`Rotten Tomatoes: crítica ${t.rt_critics?t.rt_critics+"%":"–"} · público ${t.rt_audience?t.rt_audience+"%":"–"}`:"",t.directors&&t.directors.length?`Direção: ${esc(t.directors.join(", "))}`:"",esc(t.lang||""),esc(t.country||"")].filter(Boolean).join(" · ")}</div></div></div>
+    ${t.plot?`<p class="d-plot">${esc(t.plot)}</p>`:""}
+    <div class="d-actions">${btns}${none}</div>${others}${rent}
+    ${!t.checked?`<div class="alt">Disponibilidade ainda não consultada para este título.</div>`:""}
+    <div class="links"><a href="https://www.imdb.com/title/${t.id}/" target="_blank" rel="noopener">IMDb</a>${t.jw?`<a href="https://www.justwatch.com${t.jw}" target="_blank" rel="noopener">JustWatch</a>`:""}</div>`;
+  $("sheet").classList.add("open");
+  $("box").querySelectorAll(".play").forEach(b=>b.onclick=async()=>{
+    b.disabled=true; const m=b.dataset.search?{}:t.mine[+b.dataset.i];
+    const r=await api("/api/play",{roku:m.roku,title:t.original||t.title,title_pt:t.title,year:t.year,type:t.type});
+    b.disabled=false;
+    if(r.ok){
+      if(b.dataset.search)toast("Busca aberta no Roku");
+      else if((m.roku||"").startsWith("search:"))toast(`Abrindo pela busca do Roku — leva uns 30 segundos. Não mexa no controle enquanto isso.`,false,9000);
+      else if(!m.direct)toast(`Abrindo o ${m.roku==="launch/13"&&m.service!=="Prime Video"?`Prime Video (canal ${m.service})`:m.service}. Procure por “${t.title}”${t.original&&t.original!==t.title?` ou “${t.original}”`:""}.`,false,9000);
+      else toast(`Abrindo no ${m.service}…`);
+      $("sheet").classList.remove("open")
+    } else toast(r.error||"Falhou",true);
+  });
+  $("box").querySelector(".close").onclick=()=>$("sheet").classList.remove("open");
+}
+
+async function pollStatus(){
+  const s=await api("/api/status"), el=$("status");
+  if(s.running){
+    const pct=s.total?Math.round(100*s.done/s.total):0;
+    el.innerHTML=`${esc(s.step)}${s.total?` — ${s.done}/${s.total}`:""}<div class="bar"><i style="width:${pct}%"></i></div>`;
+    if(s.done&&s.done%150<8)load();
+    setTimeout(pollStatus,2500); pollStatus.wasRunning=true;
+  }else{
+    if(s.error)el.textContent="Erro na atualização: "+s.error;
+    else el.textContent=DATA&&DATA.synced_at?`Atualizado em ${new Date(DATA.synced_at*1000).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}`:"";
+    if(pollStatus.wasRunning){pollStatus.wasRunning=false;await load();el.textContent="Atualização concluída."}
+  }
+}
+
+$("grid").onclick=e=>{const c=e.target.closest(".card");if(c)openTitle(c.dataset.id)};
+$("sheet").onclick=e=>{if(e.target.id==="sheet")$("sheet").classList.remove("open")};
+document.addEventListener("keydown",e=>{if(e.key==="Escape")$("sheet").classList.remove("open")});
+$("chips").onclick=e=>{const c=e.target.closest(".chip");if(!c)return;const s=c.dataset.s;selSvc.has(s)?selSvc.delete(s):selSvc.add(s);c.classList.toggle("on");store.set("svc",[...selSvc]);render()};
+["list","type","sort","lang"].forEach(k=>$(k).onchange=()=>{store.set(k,$(k).value);render()});
+$("mineOnly").onchange=()=>{store.set("mine",$("mineOnly").checked);render()};
+let qT;$("q").oninput=()=>{clearTimeout(qT);qT=setTimeout(render,150)};
+$("shuffle").onclick=()=>{const a=current();if(!a.length)return toast("Nada para sortear com esses filtros",true);openTitle(a[Math.floor(Math.random()*a.length)].id)};
+$("sync").onclick=async()=>{await api("/api/sync",{});toast("Atualizando listas e disponibilidade…");setTimeout(pollStatus,800)};
+$("fab").onclick=()=>$("remote").classList.toggle("open");
+document.querySelectorAll(".pad button").forEach(b=>b.onclick=async()=>{const r=await api("/api/key",{key:b.dataset.k});if(!r.ok)toast(r.error||"Falhou",true)});
+
+load().then(pollStatus);
+</script>
+</body>
+</html>

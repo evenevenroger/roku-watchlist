@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component name="MainScene" extends="Scene">
+  <script type="text/brightscript" uri="pkg:/components/MainScene.brs" />
+  <children>
+    <Rectangle width="1920" height="1080" color="0x0E0F13FF" />
+
+    <Label id="header" translation="[90,50]" text="Minha Watchlist" color="0xECEEF3FF"
+           font="font:LargeBoldSystemFont" />
+    <Label id="subtitle" translation="[90,118]" width="1300" maxLines="1" color="0x9AA0ADFF"
+           font="font:SmallSystemFont" />
+    <Label id="hint" translation="[1130,62]" width="700" horizAlign="right" color="0x9AA0ADFF"
+           font="font:SmallSystemFont" />
+    <Label id="message" translation="[90,480]" width="1740" horizAlign="center" wrap="true"
+           text="Carregando suas listas..." color="0x9AA0ADFF" font="font:MediumSystemFont" />
+
+    <!-- Tela inicial: um cartão por lista -->
+    <MarkupGrid id="home" translation="[90,180]" visible="false"
+                itemComponentName="ListCard"
+                numColumns="3" numRows="2"
+                itemSize="[540,340]" itemSpacing="[40,44]"
+                drawFocusFeedback="true" focusBitmapBlendColor="0x6C3FF5FF" />
+
+    <!-- Tela da lista: grade de pôsteres -->
+    <Label id="focusInfo" translation="[90,162]" width="1740" maxLines="1" visible="false"
+           color="0xE3C16FFF" font="font:SmallBoldSystemFont" />
+    <MarkupGrid id="grid" translation="[90,222]" visible="false"
+                itemComponentName="PosterItem"
+                numColumns="7" numRows="2"
+                itemSize="[220,410]" itemSpacing="[28,22]"
+                drawFocusFeedback="true" focusBitmapBlendColor="0x6C3FF5FF" />
+
+    <!-- Oscar e Cannes: anos à esquerda, fileiras à direita -->
+    <LabelList id="years" translation="[90,230]" itemSize="[210,60]" numRows="13" visible="false"
+               color="0x9AA0ADFF" focusedColor="0xECEEF3FF" focusBitmapBlendColor="0x6C3FF5FF">
+      <Font role="font" uri="font:BoldSystemFontFile" size="30" />
+      <Font role="focusedFont" uri="font:BoldSystemFontFile" size="30" />
+    </LabelList>
+    <Rectangle id="yearsLine" translation="[322,222]" width="2" height="820" color="0x262932FF" visible="false" />
+    <RowList id="awardRows" translation="[360,222]" visible="false"
+             itemComponentName="PosterItem"
+             numRows="2"
+             itemSize="[1480,470]"
+             itemSpacing="[0,24]"
+             rowItemSize="[[220,410]]"
+             rowItemSpacing="[[24,0]]"
+             showRowLabel="[true]"
+             rowLabelOffset="[[0,12]]"
+             rowLabelColor="0xCFD3DCFF"
+             rowLabelFont="font:SmallBoldSystemFont"
+             rowFocusAnimationStyle="floatingFocus"
+             focusBitmapBlendColor="0x6C3FF5FF" />
+
+    <!-- Painel de ordenar e filtrar -->
+    <Group id="panel" visible="false">
+      <Rectangle translation="[1180,0]" width="740" height="1080" color="0x171920FA" />
+      <Label id="panelTitle" translation="[1240,60]" width="620" text="Ordenar e filtrar"
+             color="0xECEEF3FF" font="font:MediumBoldSystemFont" />
+      <LabelList id="optCats" translation="[1240,140]" itemSize="[620,64]" numRows="12"
+                 color="0xCFD3DCFF" focusedColor="0x0E0F13FF" focusBitmapBlendColor="0xECEEF3FF" />
+      <LabelList id="optVals" translation="[1240,140]" itemSize="[620,64]" numRows="13" visible="false"
+                 color="0xCFD3DCFF" focusedColor="0x0E0F13FF" focusBitmapBlendColor="0xECEEF3FF" />
+    </Group>
+
+    <!-- Ficha do título -->
+    <Group id="details" visible="false">
+      <Rectangle width="1920" height="1080" color="0x0E0F13FA" />
+      <Poster id="dPoster" translation="[120,130]" width="440" height="660" loadDisplayMode="scaleToZoom" />
+      <Label id="dTitle" translation="[620,130]" width="1180" wrap="true" maxLines="2"
+             color="0xECEEF3FF" font="font:LargeBoldSystemFont" />
+      <Label id="dMeta" translation="[620,250]" width="1180" color="0xF5C518FF" font="font:MediumSystemFont" />
+      <Label id="dInfo" translation="[620,305]" width="1180" maxLines="1" color="0x9AA0ADFF" font="font:SmallSystemFont" />
+      <Label id="dGenres" translation="[620,345]" width="1180" maxLines="1" color="0x9AA0ADFF" font="font:SmallSystemFont" />
+      <Label id="dAwards" translation="[620,385]" width="1180" wrap="true" maxLines="2" color="0xE3C16FFF" font="font:SmallestSystemFont" />
+      <Label id="dPlot" translation="[620,460]" width="1180" height="200" wrap="true" maxLines="5"
+             color="0xCFD3DCFF" font="font:SmallSystemFont" />
+      <ButtonGroup id="dButtons" translation="[620,690]" minWidth="700" />
+      <Label id="dStatus" translation="[620,960]" width="1180" wrap="true" color="0x9AA0ADFF"
+             font="font:SmallSystemFont" />
+    </Group>
+  </children>
+</component>
