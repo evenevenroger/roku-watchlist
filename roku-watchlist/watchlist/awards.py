@@ -12,8 +12,6 @@ AWARDS = {
             r"(Best (Motion )?Picture|Outstanding (Motion )?Picture|Outstanding Production)", c))),
         ("Filme internacional", lambda t, c, y=0: t == "Oscar" and bool(
             re.search(r"International Feature|Foreign Language", c))),
-        # "Best Director, Comedy/Dramatic Picture" em 1929 e "Best Achievement in Directing" depois
-        ("Diretor", lambda t, c, y=0: t == "Oscar" and bool(re.match(r"Best (Director|Achievement in Directing)", c))),
         # só roteiro: "Original Story"/"Motion Picture Story" (até os anos 1950) premiavam o argumento
         ("Roteiro", lambda t, c, y=0: t == "Oscar" and bool(re.search(r"Screenplay|Adaptation|Adapted", c))),
         ("Animação", lambda t, c, y=0: t == "Oscar" and "Animated Feature" in c),
