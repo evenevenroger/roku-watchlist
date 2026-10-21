@@ -164,5 +164,6 @@ def fetch_list(list_id):
             s = d["list"]["titleListItemSearch"]
         items += [parse_title(e["title"]) for e in s["edges"] if e.get("title")]
         if not s["pageInfo"]["hasNextPage"]:
-            return items
+            seen = set()                    # o IMDb deixa pôr o mesmo título duas vezes numa lista
+            return [t for t in items if not (t["id"] in seen or seen.add(t["id"]))]
         after = s["pageInfo"]["endCursor"]

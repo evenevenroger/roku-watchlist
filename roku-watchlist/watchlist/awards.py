@@ -1,4 +1,4 @@
-"""Oscar e Cannes a partir dos prêmios registrados no IMDb."""
+"""Oscar, Cannes, Veneza, Berlim e Sundance a partir dos prêmios registrados no IMDb."""
 import re
 
 from .common import state
@@ -10,10 +10,12 @@ AWARDS = {
     "oscar": ("ev0000003", False, [
         ("Melhor filme", lambda t, c, y=0: t == "Oscar" and bool(re.match(
             r"(Best (Motion )?Picture|Outstanding (Motion )?Picture|Outstanding Production)", c))),
-        # só roteiro: "Original Story"/"Motion Picture Story" (até os anos 1950) premiavam o argumento
-        ("Roteiro", lambda t, c, y=0: t == "Oscar" and bool(re.search(r"Screenplay|Adaptation|Adapted", c))),
         ("Filme internacional", lambda t, c, y=0: t == "Oscar" and bool(
             re.search(r"International Feature|Foreign Language", c))),
+        # "Best Director, Comedy/Dramatic Picture" em 1929 e "Best Achievement in Directing" depois
+        ("Diretor", lambda t, c, y=0: t == "Oscar" and bool(re.match(r"Best (Director|Achievement in Directing)", c))),
+        # só roteiro: "Original Story"/"Motion Picture Story" (até os anos 1950) premiavam o argumento
+        ("Roteiro", lambda t, c, y=0: t == "Oscar" and bool(re.search(r"Screenplay|Adaptation|Adapted", c))),
         ("Animação", lambda t, c, y=0: t == "Oscar" and "Animated Feature" in c),
         ("Documentário", lambda t, c, y=0: t == "Oscar" and "Documentary" in c and "Short" not in c),
     ]),
@@ -45,6 +47,11 @@ AWARDS = {
         ("Grande Prêmio do Júri", lambda t, c, y=0: t == "Grand Special Jury Prize" or (
             t == "Silver Lion" and c == "Grand Jury Prize")),
         ("Prêmio Especial do Júri", lambda t, c, y=0: t == "Special Jury Prize" and c == ""),
+    ]),
+    # Sundance: competição americana de ficção ("Dramatic"; "U.S. Dramatic" no prêmio do público desde 2022)
+    "sundance": ("ev0000631", True, [
+        ("Grande Prêmio do Júri", lambda t, c, y=0: t == "Grand Jury Prize" and c == "Dramatic"),
+        ("Prêmio do Público", lambda t, c, y=0: t == "Audience Award" and c in ("Dramatic", "U.S. Dramatic")),
     ]),
 }
 def festival_top(year):
@@ -95,6 +102,6 @@ def fetch_awards(group):
     return out
 
 
-AWARD_NAMES = {"oscar": "Oscar", "cannes": "Cannes", "veneza": "Veneza", "berlim": "Berlim"}
+AWARD_NAMES = {"oscar": "Oscar", "cannes": "Cannes", "veneza": "Veneza", "berlim": "Berlim", "sundance": "Sundance"}
 # ícone da faixa do pôster de cada prêmio (roku-channel/images/<ícone>_dark|_gold.png)
-AWARD_ICONS = {"oscar": "trophy", "cannes": "palm", "veneza": "lion", "berlim": "bear"}
+AWARD_ICONS = {"oscar": "trophy", "cannes": "palm", "veneza": "lion", "berlim": "bear", "sundance": "sun"}

@@ -1,4 +1,4 @@
-"""Ícones da faixa de prêmio no pôster: leão (Veneza) e urso (Berlim), em versão escura e dourada.
+"""Ícones da faixa de prêmio no pôster: leão (Veneza), urso (Berlim) e sol (Sundance), escuros e dourados.
 Silhuetas de cabeça de frente, com olhos e focinho vazados, para continuar legíveis em 40×40.
 Uso: python tools/award_icons.py [pasta]   — sem pasta, grava em roku-channel/images."""
 import math
@@ -63,6 +63,20 @@ def bear():
     return m
 
 
+def sun():
+    """Sol de Sundance: disco com anel vazado e doze raios pontudos."""
+    m, d = canvas()
+    for i in range(12):
+        a = math.radians(i * 30 - 90)
+        w = math.radians(9)
+        poly(d, [(50 + 30 * math.cos(a - w), 50 + 30 * math.sin(a - w)), (50 + 48 * math.cos(a), 50 + 48 * math.sin(a)),
+                 (50 + 30 * math.cos(a + w), 50 + 30 * math.sin(a + w))])
+    circ(d, 50, 50, 30)
+    circ(d, 50, 50, 25, 0)
+    circ(d, 50, 50, 20)
+    return m
+
+
 def colored(mask, rgb):
     a = mask.resize((SIZE, SIZE), Image.LANCZOS)
     im = Image.new("RGBA", (SIZE, SIZE), rgb + (0,))
@@ -74,7 +88,7 @@ if __name__ == "__main__":
     here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(here, "roku-channel", "images")
     os.makedirs(out, exist_ok=True)
-    for name, fn in (("lion", lion), ("bear", bear)):
+    for name, fn in (("lion", lion), ("bear", bear), ("sun", sun)):
         mask = fn()
         colored(mask, DARK).save(os.path.join(out, name + "_dark.png"))
         colored(mask, GOLD).save(os.path.join(out, name + "_gold.png"))

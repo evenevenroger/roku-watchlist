@@ -2,7 +2,7 @@
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-from .awards import fetch_awards
+from .awards import AWARDS, fetch_awards
 from .common import CACHE_PATH, CONFIG, RT_PATH, load_json, lock, log, save_json, state
 from .imdb import fetch_list, fetch_rated, fetch_titles, fetch_user_lists
 from .justwatch import JustWatchUnavailable, jw_lookup, roku_link, service_for
@@ -32,7 +32,9 @@ def sync(force_offers=False):
             state["step"] = f"Lendo lista {i + 1}/{len(all_lists)}: {L['name']}"
             if L["id"].startswith("award:"):
                 group = L["id"].split(":", 1)[1]
-                fresh = time.time() - (cache.get("awards_at") or {}).get(group, 0) < AWARDS_MAX_AGE
+                cats = [c for c, _ in AWARDS[group][2]]
+                fresh = (time.time() - (cache.get("awards_at") or {}).get(group, 0) < AWARDS_MAX_AGE
+                         and (cache.get("awards_cats") or {}).get(group) == cats)   # categorias mudaram: relê
                 if fresh and L["id"] in (cache.get("lists") or {}) and group in (cache.get("awards") or {}):
                     # prêmios mudam uma vez por ano: reaproveita o que já foi lido neste mês
                     lists[L["id"]] = cache["lists"][L["id"]]
@@ -42,6 +44,7 @@ def sync(force_offers=False):
                 items = fetch_titles(awards)
                 cache.setdefault("awards", {})[group] = awards
                 cache.setdefault("awards_at", {})[group] = time.time()
+                cache.setdefault("awards_cats", {})[group] = cats
                 newest = {tid: max((a["y"] or 0) for a in v) for tid, v in awards.items()}
                 items.sort(key=lambda t: (-newest.get(t["id"], 0), t["title"] or ""))
             elif L["id"].startswith("rated"):

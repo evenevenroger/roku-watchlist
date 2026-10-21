@@ -1,10 +1,10 @@
 title=Minha Watchlist
 major_version=1
 minor_version=5
-build_version=6
+build_version=7
 ui_resolutions=fhd
 mm_icon_focus_hd=pkg:/images/icon_hd.png
 mm_icon_focus_sd=pkg:/images/icon_sd.png
 splash_screen_fhd=pkg:/images/splash_fhd.jpg
-splash_color=#1D1638
+splash_color=#14193A
 splash_min_time=600
