@@ -57,6 +57,12 @@ sub init()
     m.optVals.observeField("itemSelected", "onValSelected")
     m.dButtons.observeField("buttonSelected", "onButtonSelected")
 
+    m.offline = false
+    m.pendingFeed = invalid
+    m.cachedTask = CreateObject("roSGNode", "ApiTask")
+    m.cachedTask.observeField("result", "onCached")
+    m.cachedTask.mode = "cached"
+    m.cachedTask.control = "RUN"
     m.feedTask = CreateObject("roSGNode", "ApiTask")
     m.feedTask.observeField("result", "onFeed")
     m.feedTask.observeField("error", "onFeedError")
@@ -70,12 +76,39 @@ end sub
 
 ' ---------- carregamento ----------
 
+sub onCached()
+    ' a cópia guardada só vale enquanto os dados novos não chegaram
+    if m.feed = invalid then applyFeed(m.cachedTask.result)
+end sub
+
 sub onFeedError()
-    m.message.text = m.feedTask.error
+    if m.feed = invalid then
+        m.message.text = m.feedTask.error
+        return
+    end if
+    m.offline = true
+    if m.screen = "home" then showHome()
 end sub
 
 sub onFeed()
-    m.feed = m.feedTask.result
+    m.offline = false
+    if m.feed = invalid or m.screen = "home" or m.screen = "loading" then
+        applyFeed(m.feedTask.result)
+    else
+        m.pendingFeed = m.feedTask.result     ' aplica quando voltar para a tela inicial
+    end if
+end sub
+
+' Prepara os itens (textos que o servidor não repete) e monta os cartões da tela inicial.
+sub applyFeed(data as object)
+    for each row in data.rows
+        for each it in row.items
+            it.genres = it.genreList.Join(", ")
+            it.directors = it.directorList.Join(", ")
+            it.sortTitle = LCase(it.title)
+        end for
+    end for
+    m.feed = data
     if m.feed.rows.Count() = 0 then
         m.message.text = "Nenhum título das suas listas está nos seus serviços."
         return
@@ -85,6 +118,7 @@ sub onFeed()
         card = root.createChild("ContentNode")
         card.title = row.name
         card.ShortDescriptionLine1 = row.items.Count().ToStr() + " para assistir agora  ·  " + row.total.ToStr() + " na lista"
+        if row.id = "new" then card.ShortDescriptionLine1 = row.items.Count().ToStr() + " títulos nas últimas 3 semanas"
         card.HDPosterUrl = posterAt(row.items, 0)
         card.SDPosterUrl = posterAt(row.items, 1)
         card.FHDPosterUrl = posterAt(row.items, 2)
@@ -94,6 +128,21 @@ sub onFeed()
     showHome()
 end sub
 
+' Linha de status da tela inicial: quando os dados foram atualizados e se algo falhou.
+function statusText() as string
+    st = m.feed.status
+    parts = []
+    if m.offline then
+        parts.Push("Sem conexão com o computador: mostrando os dados guardados")
+    end if
+    if st <> invalid then
+        if st.synced <> "" then parts.Push("Atualizado em " + st.synced)
+        if st.incomplete = true then parts.Push("ainda consultando alguns títulos")
+        if st.error <> "" then parts.Push("Última atualização falhou: " + st.error)
+    end if
+    return parts.Join("   ·   ")
+end function
+
 function posterAt(items as object, i as integer) as string
     if items.Count() > i then return items[i].poster
     return ""
@@ -102,10 +151,17 @@ end function
 ' ---------- tela inicial ----------
 
 sub showHome()
+    if m.pendingFeed <> invalid then
+        data = m.pendingFeed
+        m.pendingFeed = invalid
+        applyFeed(data)
+        return
+    end if
+    removeSearchRow()
     m.screen = "home"
     m.header.text = "Minha Watchlist"
-    m.subtitle.text = "Escolha uma lista"
-    m.hint.text = ""
+    m.subtitle.text = statusText()
+    m.hint.text = "*  buscar"
     m.grid.visible = false
     m.focusInfo.visible = false
     m.panel.visible = false
@@ -470,17 +526,20 @@ sub showDetails(it as object)
     if it.mine > 0 then meta.Push("Minha nota " + it.mine.ToStr())
     if it.rtC <> "" or it.rtA <> "" then meta.Push(rtText(it))
     m.dMeta.text = meta.Join("   ·   ")
+    d = m.feed.details[it.id]
+    if d = invalid then d = { plot: "", cast: "", awardText: "", country: "", play: [] }
+    m.currentDetails = d
     info = []
     if it.directors <> "" then info.Push("Direção: " + it.directors)
     info.Push(it.lang)
-    if it.country <> "" then info.Push(it.country)
+    if d.country <> "" then info.Push(d.country)
     m.dInfo.text = info.Join("   ·   ")
     extra = []
     if it.genres <> "" then extra.Push(it.genres)
-    if it.cast <> "" then extra.Push("Com " + it.cast)
+    if d.cast <> "" then extra.Push("Com " + d.cast)
     m.dGenres.text = extra.Join("   ·   ")
-    m.dAwards.text = it.awardText
-    m.dPlot.text = it.plot
+    m.dAwards.text = d.awardText
+    m.dPlot.text = d.plot
     labels = []
     for i = 0 to it.services.Count() - 1
         if it.direct[i] then
@@ -520,14 +579,19 @@ sub onButtonSelected()
     m.playTask.observeField("result", "onPlayResult")
     m.playTask.observeField("error", "onPlayError")
     m.playTask.mode = "play"
-    m.playTask.body = { id: m.current.id, service: service }
+    steps = invalid
+    idx = m.dButtons.buttonSelected
+    if m.currentDetails.play <> invalid and idx < m.currentDetails.play.Count() then steps = m.currentDetails.play[idx]
+    m.playTask.body = { id: m.current.id, service: service, steps: steps }
     m.playTask.control = "RUN"
 end sub
 
 sub onPlayResult()
     r = m.playTask.result
     if r.ok = true then
-        if m.current.direct[m.dButtons.buttonSelected] then
+        if r.local = true then
+            m.dStatus.text = "Abrindo direto pelo Roku (o computador não respondeu)..."
+        else if m.current.direct[m.dButtons.buttonSelected] then
             m.dStatus.text = "Abrindo... (alguns serviços levam até 30 segundos)"
         else
             m.dStatus.text = "Abrindo o app. Procure por: " + m.current.title
@@ -545,6 +609,10 @@ end sub
 
 function onKeyEvent(key as string, press as boolean) as boolean
     if not press then return false
+    if m.screen = "home" and key = "options" and m.feed <> invalid then
+        openSearch()
+        return true
+    end if
     if m.details.visible then
         if key = "back" then
             hideDetails()
@@ -724,4 +792,52 @@ sub pickRandomAward()
         all.Append(r)
     end for
     if all.Count() > 0 then showDetails(all[Rnd(all.Count()) - 1])
+end sub
+
+
+' ---------- busca (botão * na tela inicial) ----------
+
+sub openSearch()
+    kd = CreateObject("roSGNode", "StandardKeyboardDialog")
+    kd.title = "Buscar título"
+    kd.message = ["Busca em todas as listas, pelo título em português ou original."]
+    kd.buttons = ["Buscar", "Cancelar"]
+    kd.observeField("buttonSelected", "onSearchButton")
+    m.searchDialog = kd
+    m.top.dialog = kd
+end sub
+
+sub onSearchButton()
+    kd = m.searchDialog
+    q = ""
+    if kd.buttonSelected = 0 then q = LCase(kd.text).Trim()
+    kd.close = true
+    if q = "" then return
+    results = []
+    seen = {}
+    for each row in m.feed.rows
+        if row.id <> "search" then
+            for each it in row.items
+                if not seen.DoesExist(it.id) and (Instr(1, it.sortTitle, q) > 0 or Instr(1, it.orig, q) > 0) then
+                    seen[it.id] = true
+                    copy = {}
+                    copy.Append(it)
+                    copy.pos = results.Count()
+                    results.Push(copy)
+                end if
+            end for
+        end if
+    end for
+    removeSearchRow()
+    m.feed.rows.Push({ id: "search", name: "Busca: " + q, total: results.Count(), award: false, items: results })
+    m.rowIndex = m.feed.rows.Count() - 1
+    resetOptions()
+    showList()
+    if results.Count() = 0 then m.message.text = "Nada encontrado para " + Chr(34) + q + Chr(34) + "."
+end sub
+
+sub removeSearchRow()
+    if m.feed = invalid then return
+    n = m.feed.rows.Count()
+    if n > 0 and m.feed.rows[n - 1].id = "search" then m.feed.rows.Delete(n - 1)
 end sub
