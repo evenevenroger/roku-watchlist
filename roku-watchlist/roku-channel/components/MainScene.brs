@@ -118,10 +118,17 @@ sub applyFeed(data as object)
         card = root.createChild("ContentNode")
         card.title = row.name
         card.ShortDescriptionLine1 = row.items.Count().ToStr() + " para assistir agora  ·  " + row.total.ToStr() + " na lista"
-        if row.id = "new" then card.ShortDescriptionLine1 = row.items.Count().ToStr() + " títulos nas últimas 3 semanas"
-        card.HDPosterUrl = posterAt(row.items, 0)
-        card.SDPosterUrl = posterAt(row.items, 1)
-        card.FHDPosterUrl = posterAt(row.items, 2)
+        ' capas do cartão: as 3 maiores notas IMDb (novidades: as 3 mais recentes)
+        top = []
+        top.Append(row.items)
+        if row.id = "new" then
+            card.ShortDescriptionLine1 = row.items.Count().ToStr() + " títulos nas últimas 3 semanas"
+        else
+            top.SortBy("r", "r")
+        end if
+        card.HDPosterUrl = posterAt(top, 0)
+        card.SDPosterUrl = posterAt(top, 1)
+        card.FHDPosterUrl = posterAt(top, 2)
     end for
     m.home.content = root
     m.message.visible = false
