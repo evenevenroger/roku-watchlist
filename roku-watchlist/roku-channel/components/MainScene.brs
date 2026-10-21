@@ -185,7 +185,9 @@ sub applyFeed(data as object)
         end for
         card.addFields({ webs: webs })
     end for
+    keep = m.home.itemFocused
     m.home.content = root
+    if keep > 0 and keep < root.getChildCount() then m.home.jumpToItem = keep
     m.message.visible = false
     flushPosters()
     showHome()

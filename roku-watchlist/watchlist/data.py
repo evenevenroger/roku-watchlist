@@ -170,7 +170,9 @@ def build_payload():
         titles.append({**t, "mine": mine, "others": others, "rent": rent,
                        "checked": bool(o), "jw": o.get("jw_path"),
                        "my_rating": (cache.get("my_ratings") or {}).get(tid),
-                       "new_since": max(((cache.get("avail") or {}).get(tid) or {}).values() or [0]),
+                       # chegou = quando ficou disponível pela 1ª vez em algum serviço seu
+                       # (entrar em mais um serviço não é novidade)
+                       "new_since": min(((cache.get("avail") or {}).get(tid) or {}).values() or [0]),
                        "rt_critics": (rt.get(tid) or {}).get("c") or None,
                        "rt_audience": (rt.get(tid) or {}).get("a") or None,
                        "awards": {g: v[tid] for g, v in (cache.get("awards") or {}).items()

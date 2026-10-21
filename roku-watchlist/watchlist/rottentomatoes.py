@@ -97,21 +97,19 @@ def rt_update():
     for n, tid in enumerate(stale, 1):
         entry = rt.get(tid) or {}
         path = entry.get("path") or paths.get(tid)
-        if not path and not entry.get("searched"):
-            title = (cache.get("titles") or {}).get(tid) or {}
-            try:
+        try:
+            if not path and not entry.get("searched"):
+                title = (cache.get("titles") or {}).get(tid) or {}
                 path = rt_search(title)
-            except requests.RequestException:
-                path = None
-            entry["searched"] = True
-        if path:
-            try:
+                entry["searched"] = True        # só conta como procurado se a busca respondeu
+            if path:
                 entry.update(rt_scores(path))
-            except requests.RequestException as e:
-                log.warning("RT recusou %s: %s", path, e)
-                time.sleep(60)          # RT recusou: tenta numa próxima rodada
-                continue
-            time.sleep(1.5)
+                time.sleep(1.5)
+        except requests.RequestException as e:
+            # RT recusou ou caiu: para esta rodada (a próxima é em 30 min) em vez de
+            # insistir título por título
+            log.warning("RT indisponível (%s): %s; paro esta rodada", tid, e)
+            break
         entry.update(path=path, ts=now)
         rt[tid] = entry
         if n % 25 == 0:

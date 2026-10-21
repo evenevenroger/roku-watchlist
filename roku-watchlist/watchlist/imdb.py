@@ -62,16 +62,22 @@ Q_LIST = """query($id:ID!,$after:String){ list(id:$id){
 # ---------- IMDb ----------
 
 def imdb_query(query, variables):
+    problem = "sem resposta"
     for attempt in range(3):
-        r = requests.post(IMDB_URL, json={"query": query, "variables": variables},
-                          headers=IMDB_HEADERS, timeout=40)
-        if r.ok:
-            d = r.json()
-            if d.get("data"):
-                return d["data"]
-            raise RuntimeError(f"IMDb: {d.get('errors')}")
+        try:
+            r = requests.post(IMDB_URL, json={"query": query, "variables": variables},
+                              headers=IMDB_HEADERS, timeout=40)
+        except requests.RequestException as e:      # queda de conexão: tenta de novo
+            problem = f"sem conexão ({e.__class__.__name__})"
+        else:
+            if r.ok:
+                d = r.json()
+                if d.get("data"):
+                    return d["data"]
+                raise RuntimeError(f"IMDb: {d.get('errors')}")
+            problem = f"respondeu {r.status_code}"
         time.sleep(2 * (attempt + 1))
-    raise RuntimeError(f"IMDb respondeu {r.status_code}")
+    raise RuntimeError(f"IMDb {problem}")
 
 
 def poster(url, width=300):
