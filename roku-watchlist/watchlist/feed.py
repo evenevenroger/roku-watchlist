@@ -1,5 +1,7 @@
 """Dados enxutos para o canal do Roku e o pacote .zip do canal."""
+import hashlib
 import io
+import json
 import os
 import zipfile
 
@@ -32,10 +34,12 @@ def award_fields(t, list_id):
                 a["c"] + (" (venceu)" if a["w"] else " (indicado)" if group == "oscar" else ""))
         row_text = "   ·   ".join(f'{AWARD_NAMES.get(group, group)} {y or ""}: ' + ", ".join(v)
                                    for y, v in sorted(by_year.items(), reverse=True))
-    # faixa do pé do pôster nas listas comuns: o prêmio mais importante do filme
+    # tarja do pôster: o prêmio mais importante que o filme ganhou
+    # (festivais na ordem de AWARD_NAMES; dentro de cada um, na ordem das categorias)
     strip = {"t": "", "w": False, "i": ""}
-    for g in AWARD_NAMES:                       # ordem de importância: Oscar, Cannes, Veneza, Berlim
-        won = [a for a in aw.get(g, []) if a["w"]]
+    for g in AWARD_NAMES:
+        order = [c for c, _ in AWARDS[g][2]]
+        won = sorted((a for a in aw.get(g, []) if a["w"]), key=lambda a: order.index(a["c"]) if a["c"] in order else 99)
         if won:
             strip = {"t": won[0]["c"], "w": True, "i": AWARD_ICONS[g]}
             break
@@ -78,8 +82,30 @@ def status_info(p):
     }
 
 
-def roku_feed():
-    """Versão enxuta para o canal: só títulos disponíveis nos seus serviços."""
+POSTER_PRE, POSTER_SUF = "https://m.media-amazon.com/images/M/", "._V1_QL75_UX300_.jpg"
+
+
+def roku_feed(fmt=1, have=""):
+    """Versão enxuta para o canal: só títulos disponíveis nos seus serviços.
+    fmt 2 (canal build 8+): pôster só com o código da imagem, sem os prêmios do letreiro,
+    e com "version"; se o canal já tem essa versão (have), volta só {"same": true}."""
+    feed = roku_feed_full()
+    if fmt < 2:
+        return feed
+    for r in feed["rows"]:
+        for it in r["items"]:
+            it.pop("awardOtherText", None)
+            p = it.get("poster") or ""
+            if p.startswith(POSTER_PRE) and p.endswith(POSTER_SUF):
+                it["poster"] = p[len(POSTER_PRE):-len(POSTER_SUF)]
+    version = hashlib.md5(json.dumps(feed, ensure_ascii=False, sort_keys=True).encode()).hexdigest()[:16]
+    if have and have == version:
+        return {"same": True, "version": version}
+    feed["version"] = version
+    return feed
+
+
+def roku_feed_full():
     p = build_payload()
     by_id = {t["id"]: t for t in p["titles"]}
     rows = []

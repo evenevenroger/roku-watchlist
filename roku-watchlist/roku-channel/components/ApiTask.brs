@@ -18,13 +18,19 @@ sub doWork()
             m.top.result = data
         end if
     else if m.top.mode = "feed" then
-        text = request("GET", serverUrl() + "/api/roku", "", 25000)
+        ' manda a versão da cópia guardada: se nada mudou, o PC responde só {same: true}
+        have = ""
+        if m.top.body = invalid or m.top.body.full <> true then have = ReadAsciiFile(versionPath())
+        text = request("GET", serverUrl() + "/api/roku?fmt=2&v=" + have, "", 25000)
         data = invalid
         if text <> invalid then data = ParseJson(text)
         if data = invalid then
             m.top.error = "Não consegui falar com o computador em " + serverUrl() + "."
         else
-            WriteAsciiFile(cachePath(), text)
+            if not data.DoesExist("same") then
+                WriteAsciiFile(cachePath(), text)
+                WriteAsciiFile(versionPath(), data.version)
+            end if
             m.top.result = data
         end if
     else if m.top.mode = "play" then
@@ -43,6 +49,10 @@ end sub
 
 function cachePath() as string
     return "cachefs:/feed.json"
+end function
+
+function versionPath() as string
+    return "cachefs:/feed.version"
 end function
 
 ' Requisição com tempo-limite; devolve o corpo ou invalid.

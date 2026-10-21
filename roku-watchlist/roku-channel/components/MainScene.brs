@@ -59,14 +59,23 @@ sub init()
 
     m.offline = false
     m.pendingFeed = invalid
+    m.cachedDone = false
+    m.feedSame = false
     m.cachedTask = CreateObject("roSGNode", "ApiTask")
     m.cachedTask.observeField("result", "onCached")
+    m.cachedTask.observeField("error", "onCachedError")
     m.cachedTask.mode = "cached"
     m.cachedTask.control = "RUN"
+    startFeed(false)
+end sub
+
+' full = true: pede o feed inteiro mesmo que a cópia guardada pareça atual
+sub startFeed(full as boolean)
     m.feedTask = CreateObject("roSGNode", "ApiTask")
     m.feedTask.observeField("result", "onFeed")
     m.feedTask.observeField("error", "onFeedError")
     m.feedTask.mode = "feed"
+    m.feedTask.body = { full: full }
     m.feedTask.control = "RUN"
 end sub
 
@@ -78,7 +87,13 @@ end sub
 
 sub onCached()
     ' a cópia guardada só vale enquanto os dados novos não chegaram
+    m.cachedDone = true
     if m.feed = invalid then applyFeed(m.cachedTask.result)
+end sub
+
+sub onCachedError()
+    m.cachedDone = true
+    if m.feed = invalid and m.feedSame then startFeed(true)    ' o PC disse "igual", mas a cópia não abriu
 end sub
 
 sub onFeedError()
@@ -92,10 +107,22 @@ end sub
 
 sub onFeed()
     m.offline = false
+    data = m.feedTask.result
+    if data.DoesExist("same") then
+        ' nada mudou desde a cópia guardada: não precisa montar tudo de novo
+        if m.feed <> invalid then
+            if m.screen = "home" then showHome()
+        else if m.cachedDone then
+            startFeed(true)
+        else
+            m.feedSame = true
+        end if
+        return
+    end if
     if m.feed = invalid or m.screen = "home" or m.screen = "loading" then
-        applyFeed(m.feedTask.result)
+        applyFeed(data)
     else
-        m.pendingFeed = m.feedTask.result     ' aplica quando voltar para a tela inicial
+        m.pendingFeed = data     ' aplica quando voltar para a tela inicial
     end if
 end sub
 
@@ -106,6 +133,10 @@ sub applyFeed(data as object)
             it.genres = it.genreList.Join(", ")
             it.directors = it.directorList.Join(", ")
             it.sortTitle = LCase(it.title)
+            ' o servidor manda só o código da imagem do IMDb
+            if it.poster <> "" and Left(it.poster, 4) <> "http" then
+                it.poster = "https://m.media-amazon.com/images/M/" + it.poster + "._V1_QL75_UX300_.jpg"
+            end if
         end for
     end for
     m.feed = data
@@ -312,7 +343,7 @@ sub onGridFocused()
 end sub
 
 ' Faixa acima da grade: só o que NÃO aparece no pôster (título, notas, serviço e
-' prêmio da lista já estão lá): direção, duração, gêneros, idioma e outros prêmios.
+' prêmio já estão lá): direção, duração, gêneros e idioma. Prêmios nunca vão aqui.
 sub showFocusInfo(it as object)
     parts = []
     if it.directors <> "" then parts.Push("Direção: " + it.directors)
@@ -323,7 +354,6 @@ sub showFocusInfo(it as object)
     end for
     if genres.Count() > 0 then parts.Push(genres.Join(", "))
     parts.Push(it.lang)
-    if it.awardOtherText <> "" then parts.Push(it.awardOtherText)
     m.focusInfo.text = parts.Join("   ·   ")
 end sub
 
@@ -751,8 +781,13 @@ sub buildAwardRows(year as string)
                 rowNode.title = cat + "      " + picked.Count().ToStr() + " de " + total.ToStr() + " indicados nos seus serviços"
                 items = []
                 for each p in picked
+                    ' venceu nesta categoria: "Venceu"; senão, o prêmio que o filme ganhou em outra
                     strip = { t: "", w: false, i: "" }
-                    if p.won = 1 then strip = { t: "Venceu", w: true, i: "trophy" }
+                    if p.won = 1 then
+                        strip = { t: "Venceu", w: true, i: "trophy" }
+                    else if p.it.strip.w = true then
+                        strip = p.it.strip
+                    end if
                     addPosterNode(rowNode, p.it, p.it.year + "  ·  " + p.it.services.Join(" · "), strip)
                     items.Push(p.it)
                 end for

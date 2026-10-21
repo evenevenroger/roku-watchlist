@@ -62,7 +62,9 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/status":
             return self.send(200, state)
         if path == "/api/roku":
-            return self.send(200, roku_feed())
+            q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            fmt = int((q.get("fmt") or ["1"])[0] or 1)
+            return self.send(200, roku_feed(fmt, (q.get("v") or [""])[0]))
         if path == "/roku-channel.zip":
             return self.send(200, build_channel_zip(self.headers.get("Host")),
                              "application/zip")
