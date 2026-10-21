@@ -1,4 +1,64 @@
 ' O servidor (app.py) troca __SERVER__ pelo endereço do PC ao gerar o .zip.
-function serverUrl() as string
+' Se o PC mudar de IP, o canal procura de novo na rede e guarda o endereço novo.
+function builtInServer() as string
     return "__SERVER__"
+end function
+
+function serverUrl() as string
+    saved = CreateObject("roRegistrySection", "watchlist").Read("server")
+    if saved <> "" then return saved
+    return builtInServer()
+end function
+
+sub saveServer(url as string)
+    sec = CreateObject("roRegistrySection", "watchlist")
+    sec.Write("server", url)
+    sec.Flush()
+end sub
+
+' Testa todos os endereços da rede do Roku na porta do servidor, em lotes; devolve "" se não achar.
+function findServer() as string
+    port = builtInServer().Mid(builtInServer().InStr(7, ":") + 1)
+    if port = "" then port = "8790"
+    myIp = ""
+    addrs = CreateObject("roDeviceInfo").GetIPAddrs()
+    for each k in addrs
+        myIp = addrs[k]
+    end for
+    parts = myIp.Split(".")
+    if parts.Count() <> 4 then return ""
+    prefix = parts[0] + "." + parts[1] + "." + parts[2] + "."
+    msgPort = CreateObject("roMessagePort")
+    for start = 1 to 254 step 64
+        pending = {}
+        for n = start to start + 63
+            if n <= 254 and n.ToStr() <> parts[3] then
+                xfer = CreateObject("roUrlTransfer")
+                xfer.SetMessagePort(msgPort)
+                xfer.SetUrl("http://" + prefix + n.ToStr() + ":" + port + "/api/status")
+                if xfer.AsyncGetToString() then pending[xfer.GetIdentity().ToStr()] = { x: xfer, n: n }
+            end if
+        end for
+        deadline = CreateObject("roTimespan")
+        while pending.Count() > 0 and deadline.TotalMilliseconds() < 1500
+            msg = wait(200, msgPort)
+            if type(msg) = "roUrlEvent" then
+                key = msg.GetSourceIdentity().ToStr()
+                if pending.DoesExist(key) then
+                    hit = pending[key]
+                    pending.Delete(key)
+                    if msg.GetResponseCode() = 200 and msg.GetString().InStr("minha-watchlist") >= 0 then
+                        for each k in pending
+                            pending[k].x.AsyncCancel()
+                        end for
+                        return "http://" + prefix + hit.n.ToStr() + ":" + port
+                    end if
+                end if
+            end if
+        end while
+        for each k in pending
+            pending[k].x.AsyncCancel()
+        end for
+    end for
+    return ""
 end function

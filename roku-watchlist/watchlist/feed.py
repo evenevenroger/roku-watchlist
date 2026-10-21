@@ -8,7 +8,7 @@ import zipfile
 import time
 
 from .awards import AWARD_ICONS, AWARD_NAMES, AWARDS
-from .common import CHANNEL_DIR, CONFIG, lan_ip
+from .common import CHANNEL_DIR, CONFIG, RECENT_PATH, lan_ip, load_json, save_json
 from .data import build_payload
 
 
@@ -67,6 +67,14 @@ def award_fields(t, list_id):
 
 
 NEW_DAYS = 21
+RECENT_MAX = 30
+
+
+def record_play(tid):
+    """Guarda o título no topo de "Vistos recentemente" (sem repetir)."""
+    recent = [r for r in (load_json(RECENT_PATH, []) or []) if r.get("id") != tid]
+    recent.insert(0, {"id": tid, "ts": int(time.time())})
+    save_json(RECENT_PATH, recent[:RECENT_MAX])
 
 
 def play_steps(m):
@@ -177,6 +185,22 @@ def roku_feed_full():
     if fresh:
         rows.insert(0, {"id": "new", "name": "Chegou nos seus serviços", "total": len(fresh),
                         "award": False, "items": fresh})
+    # vistos recentemente: o que você abriu pelo canal, do mais recente ao mais antigo
+    first = {}
+    for r in rows:
+        for it in r["items"]:
+            if it["id"] not in first or (first[it["id"]][0] and not r["award"]):
+                first[it["id"]] = (r["award"], it)      # prefere a cópia de uma lista comum
+    recent = []
+    for rec in load_json(RECENT_PATH, []) or []:
+        hit = first.get(rec.get("id"))
+        if hit:
+            it = dict(hit[1])
+            it["pos"] = len(recent)
+            recent.append(it)
+    if recent:
+        rows.insert(0, {"id": "recent", "name": "Vistos recentemente", "total": len(recent),
+                        "award": False, "items": recent})
     # sinopse, elenco e como tocar vão uma vez por título (não repetem em cada lista)
     details = {}
     for r in rows:

@@ -22,6 +22,7 @@ sub doWork()
         have = ""
         if m.top.body = invalid or m.top.body.full <> true then have = ReadAsciiFile(versionPath())
         text = request("GET", serverUrl() + "/api/roku?fmt=3&v=" + have, "", 25000)
+        if text = invalid and relocateServer() then text = request("GET", serverUrl() + "/api/roku?fmt=3&v=" + have, "", 25000)
         data = invalid
         if text <> invalid then data = ParseJson(text)
         if data = invalid then
@@ -36,6 +37,7 @@ sub doWork()
     else if m.top.mode = "play" then
         body = m.top.body
         text = request("POST", serverUrl() + "/api/play_title", FormatJson({ id: body.id, service: body.service }), 8000)
+        if text = invalid and relocateServer() then text = request("POST", serverUrl() + "/api/play_title", FormatJson({ id: body.id, service: body.service }), 8000)
         if text <> invalid then
             data = ParseJson(text)
             if data <> invalid then
@@ -46,6 +48,14 @@ sub doWork()
         m.top.result = playWithoutPC(body.steps)
     end if
 end sub
+
+' O PC não respondeu no endereço conhecido: procura na rede e guarda se achar em outro.
+function relocateServer() as boolean
+    found = findServer()
+    if found = "" or found = serverUrl() then return false
+    saveServer(found)
+    return true
+end function
 
 function cachePath() as string
     return "cachefs:/feed.json"

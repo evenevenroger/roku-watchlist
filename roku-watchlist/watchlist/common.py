@@ -10,6 +10,7 @@ BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIG_PATH = os.path.join(BASE, "config.json")
 DATA_DIR = os.path.join(BASE, "data")
 CACHE_PATH = os.path.join(DATA_DIR, "cache.json")
+RECENT_PATH = os.path.join(DATA_DIR, "recent.json")   # títulos abertos pelo canal ou pelo celular
 RT_PATH = os.path.join(DATA_DIR, "rt.json")
 LOG_PATH = os.path.join(DATA_DIR, "server.log")
 STATIC = os.path.join(BASE, "static")

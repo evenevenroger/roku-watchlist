@@ -10,7 +10,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from .common import CACHE_PATH, CONFIG, STATIC, lan_ip, load_json, log, state
 from .data import build_payload, sync
-from .feed import build_channel_zip, roku_feed
+from .feed import build_channel_zip, record_play, roku_feed
 from .roku import KEYS, play_link, roku_post
 from .rottentomatoes import rt_worker
 
@@ -60,7 +60,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/data":
             return self.send(200, build_payload())
         if path == "/api/status":
-            return self.send(200, state)
+            return self.send(200, {**state, "app": "minha-watchlist"})   # o canal reconhece o PC por aqui
         if path == "/api/roku":
             q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
             fmt = int((q.get("fmt") or ["1"])[0] or 1)
@@ -80,6 +80,8 @@ class Handler(BaseHTTPRequestHandler):
             b = self.body()
             ok, err = play_link(b.get("roku") or "", b.get("title") or "",
                                 b.get("title_pt"), b.get("type"), b.get("year"))
+            if ok and b.get("id"):
+                record_play(b["id"])
             return self.send(200, {"ok": ok, "error": err})
         if path == "/api/play_title":
             # usado pelo canal do Roku: manda só o id e o serviço
@@ -90,6 +92,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(404, {"ok": False, "error": "título não encontrado"})
             ok, err = play_link(m["roku"] or "", t.get("original") or t["title"],
                                 t["title"], t.get("type"), t.get("year"))
+            if ok:
+                record_play(t["id"])
             return self.send(200, {"ok": ok, "error": err})
         if path == "/api/key":
             k = self.body().get("key")

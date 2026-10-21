@@ -166,6 +166,8 @@ sub applyFeed(data as object)
         top.Append(row.items)
         if row.id = "new" then
             card.ShortDescriptionLine1 = row.items.Count().ToStr() + " títulos nas últimas 3 semanas"
+        else if row.id = "recent" then
+            card.ShortDescriptionLine1 = row.items.Count().ToStr() + " títulos que você abriu pelo canal"
         else
             top.SortBy("r", "r")
         end if
@@ -227,7 +229,8 @@ sub onHomeSelected()
     m.rowIndex = m.home.itemSelected
     resetOptions()
     ' padrão: maior nota do IMDb primeiro (novidades seguem da mais recente para a mais antiga)
-    if m.feed.rows[m.rowIndex].id <> "new" then m.opts.sort = 1
+    rid = m.feed.rows[m.rowIndex].id
+    if rid <> "new" and rid <> "recent" then m.opts.sort = 1
     if m.feed.rows[m.rowIndex].award = true then
         showAwards()
     else
