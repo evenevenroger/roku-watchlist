@@ -56,8 +56,14 @@ sub doWork()
     else if mode = "posters" then
         savePosters(m.top.body.codes)
     else if mode = "posterlist" then
-        names = CreateObject("roFileSystem").GetDirectoryListing("cachefs:/p")
-        if names = invalid then names = []
+        ' roList não passa por campo de nó: copia para um array comum
+        names = []
+        listing = CreateObject("roFileSystem").GetDirectoryListing("cachefs:/p")
+        if listing <> invalid then
+            for each name in listing
+                names.Push(name)
+            end for
+        end if
         m.top.result = { names: names }
     else if mode = "play" then
         body = m.top.body

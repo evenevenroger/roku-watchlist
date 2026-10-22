@@ -229,7 +229,9 @@ end function
 ' Capas já guardadas de aberturas anteriores; as que forem pedidas antes disso
 ' só vêm da internet nesta vez (a tarefa de capas vê que já existem e não baixa de novo).
 sub onPosterList()
-    for each name in m.listTask.result.names
+    names = m.listTask.result.names
+    if names = invalid then return
+    for each name in names
         if Right(name, 4) = ".jpg" then m.posterCache[Left(name, Len(name) - 4)] = true
     end for
 end sub
