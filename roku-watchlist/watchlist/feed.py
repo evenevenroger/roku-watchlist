@@ -332,6 +332,8 @@ def _cover_tiers(r):
         return ["Melhor filme"]
     if "document" in _fold(r["name"]):
         return ["Documentário"]
+    if "animat" in _fold(r["name"]) or "animac" in _fold(r["name"]):
+        return ["Animação", "Melhor filme", "Roteiro", "Filme internacional"]
     return ["Melhor filme", "Roteiro", "Filme internacional"]
 
 
