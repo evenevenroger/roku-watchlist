@@ -106,6 +106,7 @@ def roku_feed(fmt=1, have=""):
     fmt 2 (canal build 8+): pôster só com o código da imagem, sem os prêmios do letreiro,
     e com "version"; se o canal já tem essa versão (have), volta só {"same": true}."""
     feed = roku_feed_full()
+    feed.pop("_oscar", None)
     if fmt < 2:
         return feed
     for r in feed["rows"]:
@@ -149,6 +150,9 @@ def compact_feed():
                 if p.startswith(POSTER_PRE) and p.endswith(POSTER_SUF):
                     it["poster"] = p[len(POSTER_PRE):-len(POSTER_SUF)]
         feed["_rows"] = {r["id"]: _row_payload(feed, r) for r in feed["rows"]}   # (corpo, versão)
+        oscar = feed.pop("_oscar", {})
+        feed["_covers"] = (_pick_covers(feed["rows"], oscar, lambda i: True),
+                           _pick_covers(feed["rows"], oscar, lambda i: not i["mine"]))
         _memo.update(key=key, feed=feed)
     return _memo["feed"]
 
@@ -169,11 +173,10 @@ def roku_home(have=""):
     rows = []
     for r in feed["rows"]:
         _, v = feed["_rows"][r["id"]]
-        items = r["items"] if r["id"] in ("new", "recent") else sorted(r["items"], key=lambda i: -i["r"])
-        unseen = [i for i in items if not i["mine"]]          # sem nota sua no IMDb
+        unseen = [i for i in r["items"] if not i["mine"]]     # sem nota sua no IMDb
         rows.append({"id": r["id"], "name": r["name"], "total": r["total"], "award": r["award"],
-                     "count": len(r["items"]), "v": v, "covers": [i["poster"] for i in items[:3]],
-                     "unseen": len(unseen), "coversUnseen": [i["poster"] for i in unseen[:3]]})
+                     "count": len(r["items"]), "v": v, "covers": feed["_covers"][0][r["id"]],
+                     "unseen": len(unseen), "coversUnseen": feed["_covers"][1][r["id"]]})
     home = {"rows": rows, "status": feed["status"], "server": feed["server"]}
     version = _hash(home)
     if have and have == version:
@@ -303,8 +306,64 @@ def roku_feed_full():
                 it.pop(k, None)
             if d:
                 details[it["id"]] = d
+    # categorias do Oscar que cada título venceu (para escolher as capas dos cartões)
+    oscar = {}
+    for r in rows:
+        for it in r["items"]:
+            t = by_id.get(it["id"]) or {}
+            won = {a["c"] for a in (t.get("awards") or {}).get("oscar", []) if a["w"]}
+            if won:
+                oscar[it["id"]] = won
     return {"rows": rows, "details": details, "status": status_info(p),
-            "server": f"http://{lan_ip()}:{CONFIG.get('port', 8765)}"}
+            "server": f"http://{lan_ip()}:{CONFIG.get('port', 8765)}", "_oscar": oscar}
+
+
+FESTIVALS = {"award:cannes", "award:veneza", "award:berlim", "award:sundance"}
+
+
+def _cover_tiers(r):
+    """Ordem de preferência das capas de um cartão: categorias do Oscar vencidas, a cada uma
+    pelas maiores notas IMDb; depois vencedores de outros festivais (tarja no pôster);
+    depois, quem sobrar, também pela nota. None = mantém a ordem
+    própria do cartão (novidades e vistos recentemente: os mais recentes; festivais: a nota)."""
+    if r["id"] in ("new", "recent") or r["id"] in FESTIVALS:
+        return None
+    if r["id"] == "award:oscar":
+        return ["Melhor filme"]
+    if "document" in _fold(r["name"]):
+        return ["Documentário"]
+    return ["Melhor filme", "Roteiro", "Filme internacional"]
+
+
+def _pick_covers(rows, oscar, keep):
+    """3 capas por cartão sem repetir filme entre cartões. O Oscar escolhe primeiro, depois as
+    outras listas na ordem da tela, e por último festivais, novidades e vistos recentemente."""
+    first = [r for r in rows if r["id"] == "award:oscar"]
+    last = [r for r in rows if _cover_tiers(r) is None]
+    order = first + [r for r in rows if r not in first and r not in last] + last
+    used, out = set(), {}
+    for r in order:
+        items = [i for i in r["items"] if keep(i) and i.get("poster")]
+        tiers = _cover_tiers(r)
+        if tiers is None:
+            ranked = items if r["id"] in ("new", "recent") else sorted(items, key=lambda i: -i["r"])
+        else:
+            by_r = sorted(items, key=lambda i: -i["r"])
+            festival = [i for i in by_r if any(s["w"] and s["i"] != "trophy" for s in i.get("strips") or [])]
+            ranked = [i for c in tiers for i in by_r if c in oscar.get(i["id"], ())] + festival + by_r
+        picked, ids = [], set()
+        for i in ranked:
+            if i["id"] in used or i["id"] in ids:
+                continue
+            picked.append(i)
+            ids.add(i["id"])
+            if len(picked) == 3:
+                break
+        if len(picked) < 3:      # lista pequena: completa mesmo repetindo capa de outro cartão
+            picked += [i for i in ranked if i["id"] not in ids][:3 - len(picked)]
+        used |= ids
+        out[r["id"]] = [i["poster"] for i in picked[:3]]
+    return out
 
 
 def build_channel_zip(host):
