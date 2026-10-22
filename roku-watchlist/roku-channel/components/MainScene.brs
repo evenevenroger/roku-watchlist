@@ -46,6 +46,8 @@ sub init()
     m.kinds = ["Filmes e séries", "Só filmes", "Só séries"]
     m.durs = ["Qualquer duração", "Até 1h40", "Até 2h", "Mais de 2h"]
     m.seens = ["Vistos e não vistos", "Só os que não vi"]     ' "visto" = tem nota sua no IMDb
+    ' "Só os que não vi" da tela inicial (Play): vale para todas as listas e fica guardado
+    m.unseen = (CreateObject("roRegistrySection", "watchlist").Read("unseen") = "1")
     resetOptions()
 
     m.home.observeField("itemSelected", "onHomeSelected")
@@ -105,7 +107,9 @@ sub startFeed(full as boolean)
 end sub
 
 sub resetOptions()
-    m.opts = { sort: 0, lang: "", service: "", genre: "", director: "", kind: 0, dur: 0, seen: 0, acat: "", ayear: "", ares: 0 }
+    seen = 0
+    if m.unseen then seen = 1
+    m.opts = { sort: 0, lang: "", service: "", genre: "", director: "", kind: 0, dur: 0, seen: seen, acat: "", ayear: "", ares: 0 }
 end sub
 
 ' ---------- carregamento ----------
@@ -166,36 +170,65 @@ sub applyFeed(data as object)
         m.message.visible = true
         return
     end if
+    buildCards()
+    m.message.visible = false
+    showHome()
+end sub
+
+' Cartões da tela inicial; com "Só os que não vi", contam e mostram só o que você não viu.
+sub buildCards()
     root = CreateObject("roSGNode", "ContentNode")
     for each row in m.feed.rows
-        card = root.createChild("ContentNode")
-        card.title = row.name
-        if row.id = "new" then
-            card.ShortDescriptionLine1 = row.count.ToStr() + " títulos nas últimas 3 semanas"
-        else if row.id = "recent" then
-            card.ShortDescriptionLine1 = row.count.ToStr() + " títulos que você abriu pelo canal"
-        else
-            card.ShortDescriptionLine1 = row.count.ToStr() + " para assistir agora  ·  " + row.total.ToStr() + " na lista"
+        if row.id <> "search" then
+            n = row.count
+            covers = row.covers
+            if m.unseen and row.unseen <> invalid then n = row.unseen
+            if m.unseen and row.coversUnseen <> invalid then covers = row.coversUnseen
+            card = root.createChild("ContentNode")
+            card.title = row.name
+            if row.id = "new" then
+                card.ShortDescriptionLine1 = n.ToStr() + " títulos nas últimas 3 semanas"
+            else if row.id = "recent" then
+                card.ShortDescriptionLine1 = n.ToStr() + " títulos que você abriu pelo canal"
+            else if m.unseen then
+                card.ShortDescriptionLine1 = n.ToStr() + " que você não viu  ·  " + row.total.ToStr() + " na lista"
+            else
+                card.ShortDescriptionLine1 = n.ToStr() + " para assistir agora  ·  " + row.total.ToStr() + " na lista"
+            end if
+            ' capas do cartão: as 3 maiores notas IMDb (novidades e vistos: as 3 mais recentes)
+            card.HDPosterUrl = coverAt(covers, 0)
+            card.SDPosterUrl = coverAt(covers, 1)
+            card.FHDPosterUrl = coverAt(covers, 2)
+            webs = []
+            for i = 0 to 2
+                code = ""
+                if covers <> invalid and covers.Count() > i then code = covers[i]
+                webs.Push(posterWeb(code))
+            end for
+            card.addFields({ webs: webs })
         end if
-        ' capas do cartão: as 3 maiores notas IMDb (novidades e vistos: as 3 mais recentes)
-        card.HDPosterUrl = coverAt(row.covers, 0)
-        card.SDPosterUrl = coverAt(row.covers, 1)
-        card.FHDPosterUrl = coverAt(row.covers, 2)
-        webs = []
-        for i = 0 to 2
-            code = ""
-            if row.covers <> invalid and row.covers.Count() > i then code = row.covers[i]
-            webs.Push(posterWeb(code))
-        end for
-        card.addFields({ webs: webs })
     end for
     keep = m.home.itemFocused
     m.home.content = root
     if keep > 0 and keep < root.getChildCount() then m.home.jumpToItem = keep
-    m.message.visible = false
     flushPosters()
-    showHome()
 end sub
+
+sub toggleUnseen()
+    m.unseen = not m.unseen
+    sec = CreateObject("roRegistrySection", "watchlist")
+    if m.unseen then sec.Write("unseen", "1") else sec.Write("unseen", "0")
+    sec.Flush()
+    m.listKey = ""
+    m.awardKey = ""
+    buildCards()
+    m.hint.text = homeHint()
+end sub
+
+function homeHint() as string
+    if m.unseen then return "*  buscar      Play  mostrar todos"
+    return "*  buscar      Play  só os que não vi"
+end function
 
 function coverAt(covers as dynamic, i as integer) as string
     if covers = invalid or covers.Count() <= i then return ""
@@ -284,7 +317,7 @@ sub showHome()
     m.screen = "home"
     m.header.text = "Minha Watchlist"
     m.subtitle.text = statusText()
-    m.hint.text = "*  buscar"
+    m.hint.text = homeHint()
     m.grid.visible = false
     m.focusInfo.visible = false
     m.panel.visible = false
@@ -860,6 +893,10 @@ function onKeyEvent(key as string, press as boolean) as boolean
         openSearch()
         return true
     end if
+    if m.screen = "home" and key = "play" and m.feed <> invalid and not m.details.visible then
+        toggleUnseen()
+        return true
+    end if
     if m.details.visible then
         if key = "back" then
             hideDetails()
@@ -935,7 +972,7 @@ sub showAwards()
 
     ' anos que têm algum filme nos seus serviços, com a quantidade
     counts = {}
-    for each it in row.items
+    for each it in awardItems(row)
         seen = {}
         for each a in it.aw
             if a.y <> "" and not seen.DoesExist(a.y) then
@@ -990,7 +1027,7 @@ sub buildAwardRows(year as string)
     if isOscar then
         for each cat in row.cats
             picked = []
-            for each it in row.items
+            for each it in awardItems(row)
                 for each a in it.aw
                     if a.y = year and a.c = cat then
                         won = 0
@@ -1026,7 +1063,7 @@ sub buildAwardRows(year as string)
         for each cat in row.cats
             t = row.totals[year + "|" + cat]
             if t <> invalid then total = total + t
-            for each it in row.items
+            for each it in awardItems(row)
                 for each a in it.aw
                     if a.y = year and a.c = cat then picked.Push({ it: it, c: cat })
                 end for
@@ -1055,6 +1092,16 @@ sub onAwardSelected()
     s = m.awardRows.rowItemSelected
     showDetails(m.awardView[s[0]][s[1]])
 end sub
+
+' Itens da lista de prêmios, sem os que você já viu quando o filtro da tela inicial está ligado.
+function awardItems(row as object) as object
+    if not m.unseen then return row.items
+    out = []
+    for each it in row.items
+        if it.mine = 0 then out.Push(it)
+    end for
+    return out
+end function
 
 sub pickRandomAward()
     all = []
