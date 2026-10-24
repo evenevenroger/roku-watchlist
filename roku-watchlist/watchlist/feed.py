@@ -4,13 +4,19 @@ import io
 import json
 import os
 import zipfile
+import ipaddress
+import requests
+import socket
+import xml.etree.ElementTree as ET
 
 import time
 import unicodedata
 
 from .awards import AWARD_ICONS, AWARD_NAMES, AWARDS
-from .common import CACHE_PATH, CHANNEL_DIR, CONFIG, RECENT_PATH, RT_PATH, lan_ip, load_json, save_json
+from .common import CACHE_PATH, CHANNEL_DIR, CONFIG, RECENT_PATH, RT_PATH, lan_ip, load_json, save_json, server_port
 from .data import build_payload
+from .tv_awards import PATH as TV_AWARDS_PATH, SERIES_TYPES, award_fields as tv_award_fields
+from .series_runtime import PATH as SERIES_RUNTIME_PATH
 
 
 # nomes curtos para quando várias categorias dividem a mesma tarja
@@ -22,6 +28,8 @@ SHORT_CAT = {"Melhor filme": "Filme", "Filme internacional": "Internacional", "G
 def award_fields(t, list_id):
     """Prêmios do título. Nas listas de prêmio, só os daquele prêmio (para filtrar);
     o texto da ficha sempre mostra todos."""
+    if t.get("type") in SERIES_TYPES:
+        return tv_award_fields(t.get("tv_awards") or {})
     aw = t.get("awards") or {}
     lines = []
     for g, entries in aw.items():
@@ -95,6 +103,11 @@ def status_info(p):
         "synced": time.strftime("%d/%m %H:%M", time.localtime(synced)) if synced else "",
         "error": (err or {}).get("msg", "") if err and (not synced or err["ts"] > synced) else "",
         "incomplete": p.get("incomplete", False),
+        "pending_offers": p.get("pending_offers", 0),
+        "coverage": p.get("coverage", {}),
+        "outcome": (p.get("sync_result") or {}).get("outcome", "idle"),
+        "problems": (p.get("sync_result") or {}).get("problems", []),
+        "full_synced": time.strftime("%d/%m %H:%M", time.localtime(p["full_synced_at"])) if p.get("full_synced_at") else "",
     }
 
 
@@ -139,7 +152,8 @@ def _mtime(path):
 def compact_feed():
     """Feed fmt 3 (sem os campos antigos), refeito só quando os dados mudam (ou a cada hora,
     por causa da janela de novidades)."""
-    key = (_mtime(CACHE_PATH), _mtime(RT_PATH), _mtime(RECENT_PATH), int(time.time() // 3600))
+    key = (_mtime(CACHE_PATH), _mtime(RT_PATH), _mtime(RECENT_PATH), _mtime(TV_AWARDS_PATH),
+           _mtime(SERIES_RUNTIME_PATH), int(time.time() // 3600))
     if _memo["key"] != key:
         feed = roku_feed_full()
         for r in feed["rows"]:
@@ -206,7 +220,7 @@ def roku_search(q):
     found = {}
     for r in feed["rows"]:
         for it in r["items"]:
-            if q and (q in _fold(it["title"]) or q in _fold(it.get("orig"))):
+            if q and (q in _fold(it["title"]) or q in _fold(it.get("orig")) or q in _fold(it.get("ptSearch"))):
                 if it["id"] not in found or (found[it["id"]][0] and not r["award"]):
                     found[it["id"]] = (r["award"], it)
     items = []
@@ -228,8 +242,18 @@ def roku_feed_full():
             t = by_id.get(tid)
             if not t or not t["mine"]:
                 continue
+            is_series = t.get("type") in SERIES_TYPES
+            is_film = not is_series
+            lusophone = ("pt" in (t.get("language_ids") or [])
+                         or bool({"BR", "PT"} & set(t.get("country_ids") or []))
+                         or t.get("lang") == "Português")
+            display_title = (t.get("title_en") or t["title"] or "") if is_film and not lusophone else (t["title"] or "")
+            display_poster = (t.get("poster_en") or t["poster"] or "") if is_film and not lusophone else (t["poster"] or "")
+            series_runtime = t.get("series_runtime") or {}
             items.append({
-                "id": t["id"], "title": t["title"] or "", "year": str(t["year"] or ""),
+                "id": t["id"], "title": display_title, "ptTitle": t["title"] or "",
+                "showTitles": is_film and not lusophone,
+                "year": str(t["year"] or ""),
                 "y": t["year"] or 0, "pos": len(items),
                 "rating": f'{t["rating"]:.1f}' if t["rating"] else "",
                 "r": float(t["rating"] or 0),
@@ -243,10 +267,16 @@ def roku_feed_full():
                 "directorList": t.get("directors") or [],
                 "cast": ", ".join(t.get("cast") or []),
                 **award_fields(t, L["id"]),
-                "series": t.get("type") in ("tvSeries", "tvMiniSeries"),
-                "plot": t["plot"] or "", "poster": t["poster"] or "",
-                "sortTitle": (t["title"] or "").lower(),
+                "series": is_series,
+                "seriesMinutes": series_runtime.get("minutes") or 0,
+                "seriesEpisodes": series_runtime.get("episodes") or 0,
+                "seriesEstimated": bool(series_runtime.get("estimated")),
+                "plot": t["plot"] or "", "poster": display_poster,
+                "availabilityChecked": time.strftime("%d/%m/%Y %H:%M", time.localtime(t["checked_at"])) if t.get("checked_at") else "",
+                "sortTitle": display_title.lower(),
                 "orig": (t.get("original") or "").lower(),
+                "originalTitle": t.get("original") or "",
+                "ptSearch": (t.get("title") or "").lower(),
                 "newSince": int(t.get("new_since") or 0),
                 "play": [play_steps(m) for m in t["mine"]],
                 "services": [m["service"] for m in t["mine"]],
@@ -301,7 +331,7 @@ def roku_feed_full():
     details = {}
     for r in rows:
         for it in r["items"]:
-            d = {k: it.pop(k) for k in ("plot", "cast", "play", "awardText", "country") if k in it}
+            d = {k: it.pop(k) for k in ("plot", "cast", "play", "awardText", "country", "availabilityChecked") if k in it}
             for k in ("genres", "directors", "sortTitle", "awardRowText"):   # o canal monta a partir das listas
                 it.pop(k, None)
             if d:
@@ -315,7 +345,7 @@ def roku_feed_full():
             if won:
                 oscar[it["id"]] = won
     return {"rows": rows, "details": details, "status": status_info(p),
-            "server": f"http://{lan_ip()}:{CONFIG.get('port', 8765)}", "_oscar": oscar}
+            "server": f"http://{lan_ip()}:{server_port()}", "_oscar": oscar}
 
 
 FESTIVALS = {"award:cannes", "award:veneza", "award:berlim", "award:sundance"}
@@ -368,17 +398,55 @@ def _pick_covers(rows, oscar, keep):
     return out
 
 
-def build_channel_zip(host):
+def build_channel_zip(host=None):
     """Empacota o canal com o endereço deste servidor embutido."""
-    server = f"http://{lan_ip()}:{CONFIG.get('port', 8765)}"
+    ip = ipaddress.ip_address(lan_ip())
+    if ip.version != 4 or not ip.is_private or ip.is_loopback or ip.is_link_local:
+        raise ValueError("Conecte o computador ao Wi-Fi do Roku antes de gerar o canal.")
+    server = f"http://{ip}:{server_port()}"
+    try:
+        with requests.Session() as session:
+            session.trust_env = False
+            response = session.get(server + "/api/status", timeout=3)
+            response.raise_for_status()
+            if response.json().get("app") != "minha-watchlist":
+                raise ValueError("O endereço não respondeu como Minha Watchlist.")
+    except (requests.RequestException, ValueError) as exc:
+        raise ValueError("Servidor indisponível no endereço do canal: " + server) from exc
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
-        for root, _, files in os.walk(CHANNEL_DIR):
-            for name in files:
+        for root, dirs, files in os.walk(CHANNEL_DIR, followlinks=False):
+            dirs[:] = sorted(d for d in dirs if not d.startswith(".") and d not in ("out", "node_modules", "__pycache__")
+                             and not os.path.islink(os.path.join(root, d))
+                             and not os.path.isjunction(os.path.join(root, d)))
+            if root == CHANNEL_DIR:
+                dirs[:] = [d for d in dirs if d in ("source", "components", "images")]
+            for name in sorted(files):
                 full = os.path.join(root, name)
                 rel = os.path.relpath(full, CHANNEL_DIR).replace(os.sep, "/")
-                data = open(full, "rb").read()
+                if os.path.islink(full) or not (rel == "manifest" or
+                        (rel.split("/")[0] in ("source", "components", "images") and
+                         rel.lower().endswith((".brs", ".xml", ".png", ".jpg", ".jpeg")))):
+                    continue
+                with open(full, "rb") as source:
+                    data = source.read()
                 if rel.endswith(".brs"):
                     data = data.replace(b"__SERVER__", server.encode())
+                    data = data.replace(b"__SERVER_NAME__", f"http://{socket.gethostname().lower()}.local:{server_port()}".encode())
+                    if b"__SERVER" in data:
+                        raise ValueError("Endereço não resolvido no canal: " + rel)
                 z.writestr(rel, data)
+        required = {"manifest", "source/main.brs", "components/config.brs", "components/MainScene.xml", "components/ApiTask.xml"}
+        if not required.issubset(z.namelist()):
+            raise ValueError("Canal incompleto: faltam arquivos obrigatórios.")
+        for name in z.namelist():
+            if name.endswith(".xml"):
+                try:
+                    component = ET.fromstring(z.read(name))
+                except ET.ParseError as exc:
+                    raise ValueError("XML inválido: " + name) from exc
+                for script in component.findall("script"):
+                    uri = script.get("uri", "")
+                    if uri.startswith("pkg:/") and uri[5:] not in z.namelist():
+                        raise ValueError("Script ausente no canal: " + uri)
     return buf.getvalue()

@@ -7,12 +7,14 @@ import sys
 import threading
 import time
 import urllib.parse
+import socket
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from .common import CACHE_PATH, CHANNEL_DIR, CONFIG, STATIC, lan_ip, load_json, log, state
-from .data import build_payload, sync
+from .common import CACHE_PATH, CHANNEL_DIR, CONFIG, STATIC, lan_ip, load_json, log, state, server_port
+from .data import build_payload, sync, start_sync, sync_status, sync_action
+from .preferences import get_preferences, update_preferences
 from .feed import build_channel_zip, record_play, roku_feed, roku_home, roku_list, roku_search
-from .roku import KEYS, play_link, roku_post
+from .roku import KEYS, play_link, roku_post, roku_health
 from .rottentomatoes import rt_worker
 
 
@@ -37,7 +39,12 @@ class Handler(BaseHTTPRequestHandler):
 
     def body(self):
         n = int(self.headers.get("Content-Length") or 0)
-        return json.loads(self.rfile.read(n) or b"{}")
+        if not 0 <= n <= 65536:
+            raise ValueError("Pedido muito grande.")
+        data = json.loads(self.rfile.read(n) or b"{}")
+        if not isinstance(data, dict):
+            raise ValueError("Pedido inválido.")
+        return data
 
     def handle_one_request(self):
         try:
@@ -67,7 +74,11 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/data":
             return self.send(200, build_payload())
         if path == "/api/status":
-            return self.send(200, {**state, "app": "minha-watchlist"})   # o canal reconhece o PC por aqui
+            return self.send(200, {**sync_status(), "app": "minha-watchlist"})
+        if path == "/api/connection":
+            return self.send(200, connection_status())
+        if path == "/api/preferences":
+            return self.send(200, get_preferences())
         if path.startswith("/api/roku"):
             q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
             arg = lambda k: (q.get(k) or [""])[0]   # noqa: E731
@@ -80,16 +91,30 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(200, roku_home(arg("v")))
             return self.send(200, roku_feed(fmt, arg("v")))
         if path == "/roku-channel.zip":
-            return self.send(200, build_channel_zip(self.headers.get("Host")),
-                             "application/zip")
+            try:
+                package = build_channel_zip()
+            except ValueError as exc:
+                return self.send(503, {"error": str(exc)})
+            return self.send(200, package, "application/zip")
         self.send(404, {"error": "não encontrado"})
 
     def do_POST(self):
+        try:
+            self.post()
+        except (ValueError, TypeError) as exc:
+            self.send(400, {"ok": False, "error": str(exc)})
+
+    def post(self):
         path = urllib.parse.urlparse(self.path).path
+        if path == "/api/preferences":
+            return self.send(200, update_preferences(self.body()))
+        if path == "/api/reconnect":
+            self.body()
+            return self.send(200, connection_status(refresh=True))
         if path == "/api/sync":
             force = bool(self.body().get("force"))
-            threading.Thread(target=sync, args=(force,), daemon=True).start()
-            return self.send(200, {"ok": True})
+            started = start_sync(force)
+            return self.send(200, {"ok": True, "started": started, "status": sync_status()})
         if path == "/api/play":
             b = self.body()
             ok, err = play_link(b.get("roku") or "", b.get("title") or "",
@@ -116,6 +141,13 @@ class Handler(BaseHTTPRequestHandler):
             ok, err = roku_post(f"keypress/{k}")
             return self.send(200, {"ok": ok, "error": err})
         self.send(404, {"error": "não encontrado"})
+
+
+def connection_status(refresh=False):
+    return {"computer": {"connected": True, "ip": lan_ip(),
+                         "url": f"http://{lan_ip()}:{server_port()}",
+                         "name_url": f"http://{socket.gethostname().lower()}.local:{server_port()}"},
+            "roku": roku_health(refresh), "data": sync_status()}
 
 
 def keep_awake():
@@ -145,25 +177,24 @@ def keep_awake():
 
 
 def auto_sync():
-    # sincroniza ao abrir (se o cache tiver mais de 1 dia) e depois a cada 24 h;
-    # se a última ficou incompleta (JustWatch bloqueou), tenta de novo após 2 h
+    # A fila pendente retoma sem reler o IMDb; falhas de fonte respeitam o recuo de 2 h.
     while True:
         c = load_json(CACHE_PATH, {})
-        age = time.time() - (c.get("synced_at") or 0)
-        retry = c.get("offers_incomplete") and time.time() - (c.get("sync_attempt_at") or 0) > 7200
-        if age > 86400 or retry:
-            sync()
-        time.sleep(1800)
+        action = sync_action(c)
+        if action and not state["running"]:
+            sync(offers_only=action == "offers")
+        time.sleep(30)
 
 
 def main():
     if sys.stdout:   # com pythonw (início automático, sem janela) não há saída
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-    port = int(os.environ.get("PORT") or CONFIG.get("port", 8765))
+    port = server_port()
+    # Uma segunda abertura não deve iniciar trabalhadores antes de descobrir a porta ocupada.
+    srv = ThreadingHTTPServer(("0.0.0.0", port), Handler)
     threading.Thread(target=auto_sync, name="sync", daemon=True).start()
     threading.Thread(target=rt_worker, name="rt", daemon=True).start()
     threading.Thread(target=keep_awake, name="awake", daemon=True).start()
-    srv = ThreadingHTTPServer(("0.0.0.0", port), Handler)
     log.info("servidor no ar na porta %s", port)
     print(f"Watchlist → Roku rodando:\n  neste PC:  http://localhost:{port}\n"
           f"  no celular (mesmo Wi-Fi):  http://{lan_ip()}:{port}\nCtrl+C para parar.")

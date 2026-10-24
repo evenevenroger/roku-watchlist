@@ -25,6 +25,8 @@ TITLE_FIELDS = """... on Title { id titleText{text} originalTitleText{text}
   directors: credits(first:2, filter:{categories:["director"]}){ edges{ node{ name{ nameText{text} } } } }
   cast: credits(first:4, filter:{categories:["actor","actress"]}){ edges{ node{ name{ nameText{text} } } } } }"""
 Q_TITLES = """query($ids:[ID!]!){ titles(ids:$ids){ %s } }""" % TITLE_FIELDS
+Q_ENGLISH = """query($ids:[ID!]!){ titles(ids:$ids){ id titleText{text} primaryImage{url}
+  countriesOfOrigin{countries{id}} spokenLanguages{spokenLanguages{id}} } }"""
 Q_RATED = """query($after:String){ advancedTitleSearch(first:250, after:$after,
   constraints:{singleUserRatingConstraint:{filterType:INCLUDE, userId:"%s", ratingRange:{min:%d, max:%d}}},
   sort:{sortBy:SINGLE_USER_RATING_DATE, sortOrder:DESC}){
@@ -142,6 +144,45 @@ def fetch_titles(ids):
         d = imdb_query(Q_TITLES, {"ids": ids[i:i + 100]})
         out += [parse_title(t) for t in d["titles"] if t]
     return out
+
+
+def fetch_english_titles(ids):
+    """Retorna o título IMDb em inglês e os países/idiomas para identificar obras lusófonas."""
+    headers = {**IMDB_HEADERS, "x-imdb-user-country": "US", "x-imdb-user-language": "en-US"}
+    out = {}
+    ids = list(dict.fromkeys(ids))
+    for i in range(0, len(ids), 100):
+        d = imdb_query_with_headers(Q_ENGLISH, {"ids": ids[i:i + 100]}, headers)
+        for t in d.get("titles") or []:
+            if not t:
+                continue
+            out[t["id"]] = {
+                "english": (t.get("titleText") or {}).get("text"),
+                "poster": poster((t.get("primaryImage") or {}).get("url")),
+                "country_ids": [c.get("id") for c in ((t.get("countriesOfOrigin") or {}).get("countries") or []) if c.get("id")],
+                "language_ids": [l.get("id") for l in ((t.get("spokenLanguages") or {}).get("spokenLanguages") or []) if l.get("id")],
+            }
+    return out
+
+
+def imdb_query_with_headers(query, variables, headers):
+    """Mesma chamada/repetições da IMDb, com idioma de apresentação específico."""
+    problem = "sem resposta"
+    for attempt in range(3):
+        try:
+            r = requests.post(IMDB_URL, json={"query": query, "variables": variables},
+                              headers=headers, timeout=40)
+        except requests.RequestException as e:
+            problem = f"sem conexão ({e.__class__.__name__})"
+        else:
+            if r.ok:
+                d = r.json()
+                if d.get("data"):
+                    return d["data"]
+                raise RuntimeError(f"IMDb: {d.get('errors')}")
+            problem = f"respondeu {r.status_code}"
+        time.sleep(2 * (attempt + 1))
+    raise RuntimeError(f"IMDb {problem}")
 
 
 Q_USER_LISTS = """query($user:ID!){ userListSearch(first:100, listOwnerUserId:$user){

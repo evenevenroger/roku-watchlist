@@ -22,12 +22,27 @@ end sub
 
 ' Testa todos os endereços da rede do Roku na porta do servidor, em lotes; devolve "" se não achar.
 function findServer() as string
-    port = builtInServer().Mid(builtInServer().InStr(7, ":") + 1)
-    if port = "" then port = "8790"
+    ' O nome do PC permite recuperar mudanças de IP sem varrer a rede inteira.
+    named = "__SERVER_NAME__"
+    probe = CreateObject("roUrlTransfer")
+    namedPort = CreateObject("roMessagePort")
+    probe.SetMessagePort(namedPort)
+    probe.SetUrl(named + "/api/status")
+    if probe.AsyncGetToString() then
+        msg = wait(1500, namedPort)
+        if type(msg) = "roUrlEvent" then
+            if msg.GetResponseCode() = 200 and msg.GetString().InStr("minha-watchlist") >= 0 then return named
+        end if
+        probe.AsyncCancel()
+    end if
+    port = "8790"
+    urlParts = builtInServer().Split(":")
+    if urlParts.Count() = 3 then port = urlParts[2].Split("/")[0]
     myIp = ""
     addrs = CreateObject("roDeviceInfo").GetIPAddrs()
     for each k in addrs
-        myIp = addrs[k]
+        candidate = addrs[k]
+        if candidate.Split(".").Count() = 4 and Left(candidate, 4) <> "127." then myIp = candidate
     end for
     parts = myIp.Split(".")
     if parts.Count() <> 4 then return ""

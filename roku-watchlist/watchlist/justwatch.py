@@ -48,20 +48,31 @@ def jw_lookup(item):
             queries.append(q)
     for q in queries:
         edges, r = None, None
+        problem = "sem resposta"
         for attempt in range(3):
             try:
                 time.sleep(1.5)          # devagar: o JustWatch bloqueia rajadas
                 r = requests.post(JW_URL, json={"query": Q_JW, "variables": {"q": q}},
                                   headers=JW_HEADERS, timeout=30)
                 if r.status_code == 200:
-                    edges = ((r.json().get("data") or {}).get("popularTitles") or {}).get("edges") or []
+                    payload = r.json()
+                    if not isinstance(payload, dict):
+                        raise ValueError("resposta inválida")
+                    connection = (payload.get("data") or {}).get("popularTitles")
+                    if payload.get("errors") or not isinstance(connection, dict) or not isinstance(connection.get("edges"), list):
+                        raise ValueError("resposta GraphQL incompleta")
+                    candidate = connection["edges"]
+                    if any(not isinstance(e, dict) or not isinstance(e.get("node"), dict) for e in candidate):
+                        raise ValueError("títulos inválidos na resposta")
+                    edges = candidate
                     break
-            except (requests.RequestException, ValueError):
-                pass
+                problem = f"HTTP {r.status_code}"
+            except (requests.RequestException, ValueError) as exc:
+                problem = f"resposta inválida ou sem conexão ({type(exc).__name__})"
             time.sleep(5 * (attempt + 1))
         if edges is None:
             # Bloqueio ou falha: não grava "não encontrado" (isso esconderia o título por dias).
-            raise JustWatchUnavailable(f"JustWatch indisponível (HTTP {getattr(r, 'status_code', '?')})")
+            raise JustWatchUnavailable(f"JustWatch indisponível ({problem})")
         nodes = [e["node"] for e in edges]
         match = next((n for n in nodes if ((n.get("content") or {}).get("externalIds") or {}).get("imdbId") == item["id"]), None)
         match = match or next((n for n in nodes if same_title(n, item)), None)

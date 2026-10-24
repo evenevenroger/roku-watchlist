@@ -15,11 +15,25 @@
 html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 button,select,input{font:inherit;color:inherit}
 header{position:sticky;top:0;z-index:5;background:rgba(14,15,19,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:10px 16px}
-.top{display:flex;align-items:center;gap:8px}
+.top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .back{flex:none;width:44px;height:40px;margin-left:-10px;display:flex;align-items:center;justify-content:center;background:none;border:0;border-radius:10px;color:var(--text);font-size:32px;line-height:1;padding:0 0 4px;cursor:pointer}
 .back:active{background:var(--panel2)}
-h1{font-size:18px;margin:0;font-weight:700;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+h1{font-size:18px;margin:0;font-weight:700;flex:1 1 100px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .btn{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:7px 11px;cursor:pointer;white-space:nowrap;font-size:14px}
+.health{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;font-size:12px}.health>span{border:1px solid var(--line);border-radius:20px;padding:3px 8px;color:var(--mute)}.health .good{color:#8addad}.health .bad{color:#ff9b9e}.health .warn{color:var(--gold)}.status-short{display:none}.network-info{overflow-wrap:anywhere;font-size:14px}.network-info a{color:var(--gold)}
+@media (max-width:1023px){
+  header{display:contents;position:static}
+  .header-info{padding:10px 16px 8px;background:var(--bg)}
+  .quick-controls{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:max-content minmax(0,1fr);align-items:center;gap:10px;padding:8px 16px;background:rgba(14,15,19,.97);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .quick-controls .tick,.quick-controls .search{margin:0}
+  .quick-controls .tick{font-size:13px;gap:6px}
+  .quick-controls .search{min-width:0}
+  .quick-controls .search input{width:100%;font-size:16px;padding:7px 8px}
+  .health{display:grid;grid-template-columns:1fr 1.08fr 1.18fr;gap:4px;flex-wrap:nowrap;font-size:11px}
+  .health>span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;padding:3px 4px}
+  .health .status-full{display:none}
+  .health .status-short{display:inline}
+}
 .sub{color:var(--mute);font-size:13px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .search{display:flex;gap:8px;margin-top:10px}
 .tick{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:14px;color:var(--text);cursor:pointer;user-select:none;width:max-content}
@@ -72,6 +86,11 @@ main{padding:14px 16px 90px}
 .arow h3 small{color:var(--mute);font-weight:500;margin-left:8px}
 .scroller{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(105px,30%);gap:9px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
 .scroller::-webkit-scrollbar{display:none}
+@media (min-width:1024px){
+  .cards{grid-template-columns:repeat(6,minmax(0,1fr))}
+  .grid{grid-template-columns:repeat(10,minmax(0,1fr))}
+  .scroller{grid-auto-columns:calc((100% - 81px)/10)}
+}
 
 /* painel de ordenar e filtrar */
 .sheet{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center}
@@ -116,16 +135,22 @@ main{padding:14px 16px 90px}
 </head>
 <body>
 <header>
+  <div class="header-info">
   <div class="top">
     <button class="back" id="back" hidden aria-label="Voltar">‹</button>
     <h1 id="title">Minha Watchlist</h1>
     <button class="btn" id="filters" hidden>Ordenar e filtrar</button>
     <button class="btn" id="shuffle" hidden title="Sortear um título">🎲</button>
+    <button class="btn" id="connection" aria-label="Conexão e reconexão">Conexão</button>
     <button class="btn" id="sync" title="Atualizar listas e disponibilidade">↻</button>
   </div>
+  <div class="health" role="status" aria-live="polite"><span id="pcHealth"><span class="status-full">Computador: verificando…</span><span class="status-short">PC: …</span></span><span id="rokuHealth"><span class="status-full">Roku: verificando…</span><span class="status-short">Roku: …</span></span><span id="dataHealth"><span class="status-full">Dados: verificando…</span><span class="status-short">Dados: …</span></span></div>
   <div class="sub" id="sub"></div>
+  </div>
+  <div class="quick-controls" id="quickControls">
   <label class="tick" id="unseenBox"><input type="checkbox" id="unseen"> Só os que não vi</label>
-  <form class="search" id="searchForm"><input id="q" type="search" placeholder="Buscar título em todas as listas…" enterkeyhint="search"></form>
+  <form class="search" id="searchForm"><input id="q" type="search" placeholder="Buscar título…" aria-label="Buscar título em todas as listas" enterkeyhint="search"></form>
+  </div>
 </header>
 <main id="main"><div class="empty">Carregando suas listas…</div></main>
 
@@ -158,17 +183,18 @@ const POSTER=(code,w)=>!code?"":code.startsWith("http")?code:`https://m.media-am
 const SORTS=[["pos","Ordem da lista"],["r","Nota IMDb"],["mine","Minha nota"],["lang","Idioma"],["new","Mais recentes"],["old","Mais antigos"],["short","Mais curtos"],["title","Título (A-Z)"],["ay","Ano do prêmio"]];
 const SEENS=["Vistos e não vistos","Só os que não vi"];   // "visto" = tem nota sua no IMDb
 const KINDS=["Filmes e séries","Só filmes","Só séries"], DURS=["Qualquer duração","Até 1h40","Até 2h","Mais de 2h"], RESULTS=["Indicados e vencedores","Só vencedores","Só indicados"];
+const SERIES_DURS=["Qualquer duração","Até 5h","5h–10h","10h–20h","20h–30h","30h–50h","50h–100h","Mais de 100h","Duração desconhecida"];
 
-let HOME=null, LISTS={}, DET={}, SEARCH=null, opts={}, pollWas=false;
+let HOME=null, LISTS={}, DET={}, SEARCH=null, opts={}, routeVersion=0;
 // "Só os que não vi" da tela inicial: vale para todas as listas e fica guardado neste celular
 let UNSEEN=false; try{UNSEEN=localStorage.getItem("unseen")==="1"}catch{}
 
 function toast(msg,err,ms){const t=$("toast");t.textContent=msg;t.className="toast show"+(err?" err":"");clearTimeout(t._h);t._h=setTimeout(()=>t.className="toast",ms||3500)}
-async function api(path,body){const r=await fetch(path,body?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}:{});return r.json()}
+async function api(path,body){const c=new AbortController(),t=setTimeout(()=>c.abort(),25000);try{const r=await fetch(path,{signal:c.signal,...(body?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}:{})});const d=await r.json();if(!r.ok)throw Error(d.error||`Erro ${r.status}`);return d}finally{clearTimeout(t)}}
 function fmtMin(m){if(!m)return"";const h=Math.floor(m/60),mm=m%60;return h?`${h}h${String(mm).padStart(2,"0")}`:`${mm} min`}
 
 // ---------- dados ----------
-async function loadHome(){HOME=await api("/api/roku?fmt=4");LISTS={};route()}
+async function loadHome(){HOME=await api("/api/roku?fmt=4");LISTS={};await route()}
 async function loadList(id){
   const row=HOME.rows.find(r=>r.id===id); if(!row)return null;
   if(LISTS[id]&&LISTS[id].v===row.v)return LISTS[id].row;
@@ -176,12 +202,13 @@ async function loadList(id){
   if(!d.row)return null;
   Object.assign(DET,d.details||{}); LISTS[id]={v:d.v,row:d.row}; return d.row;
 }
-function statusText(){const s=HOME&&HOME.status;if(!s)return"";return[s.synced?`Atualizado em ${s.synced}`:"",s.incomplete?"ainda consultando alguns títulos":"",s.error?`Última atualização falhou: ${s.error}`:""].filter(Boolean).join(" · ")}
+function statusText(){const s=HOME&&HOME.status;if(!s)return"";return[s.synced?`Atualizado em ${s.synced}`:"",s.pending_offers?`${s.pending_offers} títulos aguardam consulta de disponibilidade`:s.incomplete?"parte das fontes não atualizou":"",s.error?`Última atualização falhou: ${s.error}`:""].filter(Boolean).join(" · ")}
 
 // ---------- navegação (o botão voltar do celular funciona) ----------
 function go(hash){if(location.hash===hash)route();else location.hash=hash}
 window.onhashchange=route;
 async function route(){
+  const version=++routeVersion;clearTimeout(scrollTimer);
   if(!HOME)return;
   const h=decodeURIComponent(location.hash.slice(1));
   $("sheet").classList.remove("open");
@@ -189,23 +216,25 @@ async function route(){
     const id=h.slice(2), meta=HOME.rows.find(r=>r.id===id);
     if(!meta)return go("");
     header(meta.name,"Abrindo…",true);
-    const row=await loadList(id); if(!row){toast("Não consegui abrir esta lista.",true);return}
-    if(!opts[id])opts[id]=defaults(id);
-    row.award?showAwards(row):showList(row);
+    const row=await loadList(id); if(version!==routeVersion)return; if(!row){toast("Não consegui abrir esta lista.",true);return}
+    if(!opts[id]||ACTIVE_LIST!==id)opts[id]=defaults(id);
+    row.award?showAwards(row):showList(row);restorePosition(id);
   }else if(h.startsWith("s/")&&SEARCH){
     if(!opts.search)opts.search=defaults("search");
     showList({id:"search",name:`Busca: ${SEARCH.q}`,items:SEARCH.items,total:SEARCH.items.length,award:false});
-  }else showHome();
+  }else{showHome();restoreHomePosition()}
 }
 function header(title,sub,inner){
   $("title").textContent=title; $("sub").textContent=sub||"";
   $("back").hidden=!inner; $("filters").hidden=true; $("shuffle").hidden=!inner;
   $("searchForm").hidden=!!inner; $("unseenBox").hidden=!!inner;
+  $("quickControls").hidden=!!inner;
 }
-function defaults(id){return{sort:id==="new"||id==="recent"?0:1,seen:UNSEEN?1:0,lang:"",service:"",genre:"",director:"",kind:0,dur:0,acat:"",ayear:"",ares:0}}
+function defaults(id){return{sort:id==="new"||id==="recent"?0:1,seen:UNSEEN?1:0,lang:"",service:"",genre:"",director:"",kind:0,dur:0,seriesDur:0,acat:"",ayear:"",ares:0,...((PREFS.lists||{})[id]||{})}}
 
 // ---------- tela inicial ----------
 function showHome(){
+  if(ACTIVE_LIST)delete opts[ACTIVE_LIST];ACTIVE_LIST="";LISTROW=null;AWROW=null;
   header("Minha Watchlist",statusText(),false);
   $("main").innerHTML=`<div class="cards">${HOME.rows.map(r=>{
     // com "Só os que não vi", o cartão conta e mostra só o que você ainda não viu
@@ -219,6 +248,7 @@ function showHome(){
 // ---------- pôster (igual ao PosterItem do canal) ----------
 let current=[];   // títulos na tela, para a ficha e o sorteio
 function poster(it,strips,line){
+  if(it.series)strips=(it.strips||[]).slice(0,1);
   current.push(it);
   const mine=it.mine>0?`<div class="chip mine">Eu ${it.mine}</div>`:"";
   const imdb=it.rating?`<div class="chip imdb">${esc(it.rating)}</div>`:"";
@@ -226,9 +256,10 @@ function poster(it,strips,line){
   const st=strips.map((s,i)=>`<div class="strip ${s.w?"won":"nom"}" style="bottom:${i*14.5}cqw"><img src="/img/${s.i}_${s.w?"dark":"gold"}.png" alt=""><span>${esc(s.t)}</span></div>`).join("");
   const rt=it.rtC||it.rtA?`<div class="rt" style="bottom:${n?n*14.5+1.8:3.6}cqw"><img src="/img/rt_tomato.png" alt=""><span>${it.rtC?it.rtC+"%":"-"}</span><img src="/img/rt_popcorn.png" alt=""><span>${it.rtA?it.rtA+"%":"-"}</span></div>`:"";
   return`<div class="p" data-n="${current.length-1}"><div class="pos"><img loading="lazy" src="${POSTER(it.poster)}" alt="">${imdb}${mine}${rt}${st}</div>
-    <div class="t">${esc(it.title)}</div><div class="y">${esc(line)}</div></div>`;
+    <div class="t">${esc(it.title)}</div><div class="y">${esc(it.series?seriesRuntimeLabel(it):"")}${it.series&&seriesRuntimeLabel(it)&&line?"  ·  ":""}${esc(line)}</div></div>`;
 }
-function awardStrips(first,it,skip){const s=first?[first]:[];for(const x of it.strips||[])if(s.length<2&&x.w&&x.i!==skip)s.push(x);return s}
+function seriesRuntimeLabel(it){if(!it.seriesMinutes)return"";return`${it.seriesEstimated?"~":""}${fmtMin(it.seriesMinutes)}${it.seriesEpisodes?` · ${it.seriesEpisodes} eps.`:""}`}
+function awardStrips(first,it,skip){if(it.series)return(it.strips||[]).slice(0,1);const s=first?[first]:[];for(const x of it.strips||[])if(s.length<2&&x.w&&x.i!==skip)s.push(x);return s}
 function focusInfo(it){const g=(it.genreList||[]).slice(0,3).join(", ");return[it.directorList&&it.directorList.length?"Direção: "+it.directorList.join(", "):"",fmtMin(it.runtime),g,it.lang].filter(Boolean).join(" · ")}
 
 // ---------- lista: ordenar e filtrar como no canal ----------
@@ -240,6 +271,7 @@ function passes(it,o){
   if(o.director&&!(it.directorList||[]).includes(o.director))return false;
   if(o.kind===1&&it.series||o.kind===2&&!it.series)return false;
   if(o.dur===1&&(!it.runtime||it.runtime>100)||o.dur===2&&(!it.runtime||it.runtime>120)||o.dur===3&&it.runtime<=120)return false;
+  if(o.seriesDur&&it.series){const m=it.seriesMinutes||0, bands=[[0,0],[1,300],[300,600],[600,1200],[1200,1800],[1800,3000],[3000,6000],[6000,Infinity]];if(o.seriesDur===8)return m===0;if(!m)return false;const [lo,hi]=bands[o.seriesDur];if(o.seriesDur===1?m>hi:m<=lo||m>hi)return false}
   if(o.acat||o.ayear||o.ares)return(it.aw||[]).some(a=>(!o.acat||a.c===o.acat)&&(!o.ayear||a.y===o.ayear)&&(!o.ares||(o.ares===1)===a.w));
   return true;
 }
@@ -251,7 +283,7 @@ function sorted(items,o){
 }
 let LISTROW=null;
 function showList(row){
-  LISTROW=row; const o=opts[row.id];
+  ACTIVE_LIST=row.id;LISTROW=row;AWROW=null; const o=opts[row.id];
   const view=sorted(row.items.filter(it=>passes(it,o)),o);
   const f=activeFilters(o);
   header(row.name,[`${view.length} de ${row.items.length} títulos`,`Ordem: ${SORTS[o.sort][1]}`,f].filter(Boolean).join(" · "),true);
@@ -276,17 +308,19 @@ function valueCounts(items,key){
 }
 function openPanel(){
   const row=LISTROW, o=opts[row.id];
-  const sel=(key,label,choices,cur)=>`<div class="opt"><label>${label}</label><select data-k="${key}">${choices.map(([v,l])=>`<option value="${esc(v)}"${String(v)===String(cur)?" selected":""}>${esc(l)}</option>`).join("")}</select></div>`;
+  const sel=(key,label,choices,cur)=>`<div class="opt"><label for="pref-${key}">${label}</label><select id="pref-${key}" data-k="${key}">${choices.map(([v,l])=>`<option value="${esc(v)}"${String(v)===String(cur)?" selected":""}>${esc(l)}</option>`).join("")}</select></div>`;
   const counts=(k,all)=>[["",all],...valueCounts(row.items,k).map(([v,n])=>[v,`${v} (${n})`])];
   let html=`<button class="close" aria-label="Fechar">×</button><h2>Ordenar e filtrar</h2>`+sel("sort","Ordenar por",SORTS.map((s,i)=>[i,s[1]]),o.sort);
   if(row.award)html+=sel("acat","Categoria",counts("acat","Todas"),o.acat)+sel("ayear","Ano",counts("ayear","Todos"),o.ayear)+sel("ares","Resultado",RESULTS.map((r,i)=>[i,r]),o.ares);
+  const seriesOnly=row.items.length>0&&row.items.every(it=>it.series);
   html+=sel("seen","Mostrar",SEENS.map((s,i)=>[i,s]),o.seen)+sel("lang","Idioma",counts("lang","Todos"),o.lang)+sel("service","Serviço",counts("service","Todos"),o.service)+sel("genre","Gênero",counts("genre","Todos"),o.genre)
     +sel("director","Diretor",counts("director","Todos"),o.director)+sel("kind","Tipo",KINDS.map((k,i)=>[i,k]),o.kind)+sel("dur","Duração",DURS.map((d,i)=>[i,d]),o.dur)
+    +(seriesOnly?sel("seriesDur","Duração total da série",SERIES_DURS.map((d,i)=>[i,d]),o.seriesDur):"")
     +`<div class="row2"><button class="btn" id="clear">Limpar filtros</button><button class="btn primary" id="apply">Pronto</button></div>`;
   $("box").innerHTML=html; $("sheet").classList.add("open");
-  const num=["sort","kind","dur","ares","seen"];
-  $("box").querySelectorAll("select").forEach(s=>s.onchange=()=>{o[s.dataset.k]=num.includes(s.dataset.k)?+s.value:s.value;showList(row)});
-  $("clear").onclick=()=>{const keep=o.sort;Object.assign(o,defaults(row.id),{sort:keep,seen:0});$("sheet").classList.remove("open");showList(row)};
+  const num=["sort","kind","dur","seriesDur","ares","seen"];
+  $("box").querySelectorAll("select").forEach(s=>s.onchange=()=>{o[s.dataset.k]=num.includes(s.dataset.k)?+s.value:s.value;saveListPrefs(row.id,{[s.dataset.k]:o[s.dataset.k]});showList(row)});
+  $("clear").onclick=()=>{const keep=o.sort;Object.assign(o,{sort:keep,seen:0,lang:"",service:"",genre:"",director:"",kind:0,dur:0,seriesDur:0,acat:"",ayear:"",ares:0});saveListPrefs(row.id,filterPrefs(o));$("sheet").classList.remove("open");showList(row)};
   $("apply").onclick=()=>$("sheet").classList.remove("open");
   $("box").querySelector(".close").onclick=()=>$("sheet").classList.remove("open");
 }
@@ -294,7 +328,8 @@ function openPanel(){
 // ---------- festivais: anos e fileiras (igual ao canal) ----------
 let AWROW=null, AWYEAR="", AWITEMS=[];
 function showAwards(row){
-  AWROW=row; $("filters").hidden=true;
+  if(ACTIVE_LIST!==row.id)AWYEAR=((PREFS.lists||{})[row.id]||{}).award_year||"";
+  ACTIVE_LIST=row.id;LISTROW=null;AWROW=row; $("filters").hidden=true;
   AWITEMS=opts[row.id].seen?row.items.filter(it=>!(it.mine>0)):row.items;   // "Só os que não vi"
   const counts={};
   for(const it of AWITEMS)new Set((it.aw||[]).map(a=>a.y).filter(Boolean)).forEach(y=>counts[y]=(counts[y]||0)+1);
@@ -303,7 +338,7 @@ function showAwards(row){
   if(!years.length){$("main").innerHTML=`<div class="empty">Nenhum filme desta lista está nos seus serviços.</div>`;return}
   if(!counts[AWYEAR])AWYEAR=years[0];
   $("main").innerHTML=`<div class="years" id="years">${years.map(y=>`<button class="yr${y===AWYEAR?" on":""}" data-y="${y}">${y}<small>${counts[y]}</small></button>`).join("")}</div><div id="arows"></div>`;
-  $("years").onclick=e=>{const b=e.target.closest(".yr");if(!b)return;AWYEAR=b.dataset.y;$("years").querySelectorAll(".yr").forEach(x=>x.classList.toggle("on",x===b));buildAwardRows()};
+  $("years").onclick=e=>{const b=e.target.closest(".yr");if(!b)return;AWYEAR=b.dataset.y;saveListPrefs(row.id,{award_year:AWYEAR});$("years").querySelectorAll(".yr").forEach(x=>x.classList.toggle("on",x===b));buildAwardRows()};
   buildAwardRows();
 }
 function buildAwardRows(){
@@ -330,17 +365,21 @@ function buildAwardRows(){
 
 // ---------- ficha ----------
 function openTitle(it){
+  clearTimeout(scrollTimer);if(ACTIVE_LIST)saveListPrefs(ACTIVE_LIST,{focus_id:it.id});
   const d=DET[it.id]||{plot:"",cast:"",awardText:"",country:"",play:[]};
-  const meta=[it.year,fmtMin(it.runtime),it.rating?"IMDb "+it.rating:"",it.mine?"Minha nota "+it.mine:"",
+  const meta=[it.year,fmtMin(it.runtime),it.series?seriesRuntimeLabel(it):"",it.rating?"IMDb "+it.rating:"",it.mine?"Minha nota "+it.mine:"",
     it.rtC||it.rtA?`RT crítica ${it.rtC?it.rtC+"%":"–"} / público ${it.rtA?it.rtA+"%":"–"}`:""].filter(Boolean).join(" · ");
   const info=[it.directorList&&it.directorList.length?"Direção: "+it.directorList.join(", "):"",it.lang,d.country].filter(Boolean).join(" · ");
   const extra=[(it.genreList||[]).join(", "),d.cast?"Com "+d.cast:""].filter(Boolean).join(" · ");
   const btns=it.services.map((s,i)=>`<button class="play" style="--c:${color(s)}" data-i="${i}">${it.direct[i]?`▶ Assistir no ${esc(s)}`:`▶ Abrir o ${esc(s)} (buscar lá)`}</button>`).join("");
+  const originalTitle=it.originalTitle||it.title, portugueseTitle=it.ptTitle||it.title;
+  const titleNames=it.showTitles?(originalTitle===portugueseTitle?`Original e português: ${originalTitle}`:[`Original: ${originalTitle}`,`Português: ${portugueseTitle}`].join(" · ")):"";
   $("box").innerHTML=`<button class="close" aria-label="Fechar">×</button>
     <div class="d-head">${it.poster?`<img src="${POSTER(it.poster,500)}" alt="">`:""}
-    <div><h2>${esc(it.title)}</h2><div class="d-sub">${esc(meta)}</div><div class="d-sub">${esc(info)}</div><div class="d-sub">${esc(extra)}</div></div></div>
+    <div><h2>${esc(it.title)}</h2>${titleNames?`<div class="d-sub">${esc(titleNames)}</div>`:""}<div class="d-sub">${esc(meta)}</div><div class="d-sub">${esc(info)}</div><div class="d-sub">${esc(extra)}</div></div></div>
     ${d.awardText?`<div class="d-aw">${esc(d.awardText)}</div>`:""}
     ${d.plot?`<p class="d-plot">${esc(d.plot)}</p>`:""}
+    ${d.availabilityChecked?`<p class="d-sub">Disponibilidade consultada em ${esc(d.availabilityChecked)}</p>`:""}
     <div class="d-actions">${btns}</div>
     <div class="links"><a href="https://www.imdb.com/title/${esc(it.id)}/" target="_blank" rel="noopener">IMDb</a></div>`;
   $("sheet").classList.add("open");
@@ -354,19 +393,85 @@ function openTitle(it){
   $("box").querySelector(".close").onclick=()=>$("sheet").classList.remove("open");
 }
 
-// ---------- atualização (barra de progresso) ----------
-async function pollStatus(){
-  let s; try{s=await api("/api/status")}catch{return setTimeout(pollStatus,10000)}
-  if(s.running){
-    const pct=s.total?Math.round(100*s.done/s.total):0;
-    if(!location.hash||location.hash==="#")$("sub").innerHTML=`${esc(s.step)}${s.total?` — ${s.done}/${s.total}`:""}<div class="bar"><i style="width:${pct}%"></i></div>`;
-    pollWas=true; setTimeout(pollStatus,2500);
-  }else if(pollWas){pollWas=false;await loadHome();toast("Atualização concluída.")}
-}
+// ---------- conexão, atualização e preferências ----------
+let PREFS={revision:0,unseen:UNSEEN,lists:{}},PENDING={},INFLIGHT={},SAVING=false,ACTIVE_LIST="",RESTORING=false;
+let CONNECTION=null,LAST_STATUS=null,syncWatching=false,syncTarget=0,MONITORING=false,monitorTimer=null,prefsTimer=null;
+try{PREFS=JSON.parse(localStorage.getItem("sharedPrefs"))||PREFS;PENDING=JSON.parse(localStorage.getItem("pendingPrefs"))||{};UNSEEN=!!PREFS.unseen}catch{}
+const FILTER_KEYS=["sort","seen","lang","service","genre","director","kind","dur","seriesDur","acat","ayear","ares"];
+function filterPrefs(o){return Object.fromEntries(FILTER_KEYS.map(k=>[k,o[k]]))}
+function mergePrefs(base,patch){const out={...base,...patch};if(base.lists||patch.lists)out.lists={...(base.lists||{})};
+  if(Object.hasOwn(patch,"unseen")&&out.lists)for(const k in out.lists)out.lists[k]={...out.lists[k],seen:patch.unseen?1:0};
+  for(const [id,v] of Object.entries(patch.lists||{}))out.lists[id]={...(out.lists[id]||{}),...v};return out}
+function applySharedPrefs(data){const old=UNSEEN;PREFS=mergePrefs(data,PENDING);UNSEEN=!!PREFS.unseen;$("unseen").checked=UNSEEN;
+  if(old!==UNSEEN){for(const id in opts)if(id!==ACTIVE_LIST)delete opts[id];if(HOME&&!ACTIVE_LIST&&!$("sheet").classList.contains("open"))showHome()}}
+function cachePrefs(){try{localStorage.setItem("sharedPrefs",JSON.stringify(PREFS));localStorage.setItem("pendingPrefs",JSON.stringify(mergePrefs(INFLIGHT,PENDING)))}catch{}}
+function queuePrefs(patch){PREFS=mergePrefs(PREFS,patch);PENDING=mergePrefs(PENDING,patch);cachePrefs();clearTimeout(prefsTimer);prefsTimer=setTimeout(flushPrefs,400)}
+function saveListPrefs(id,values){if(id!=="search")queuePrefs({lists:{[id]:values}})}
+async function flushPrefs(){if(SAVING||!Object.keys(PENDING).length)return;SAVING=true;const patch=PENDING;INFLIGHT=patch;PENDING={};
+  try{applySharedPrefs(await api("/api/preferences",patch));cachePrefs()}
+  catch{PENDING=mergePrefs(patch,PENDING);toast("Preferências guardadas neste aparelho; tentarei sincronizar novamente.",true)}
+  finally{INFLIGHT={};cachePrefs();SAVING=false;if(Object.keys(PENDING).length){clearTimeout(prefsTimer);prefsTimer=setTimeout(flushPrefs,5000)}}}
+async function refreshPrefs(){if(SAVING||Object.keys(PENDING).length)return;const d=await api("/api/preferences");
+  if(d.revision!==PREFS.revision||d.unseen!==PREFS.unseen){PREFS=d;UNSEEN=!!d.unseen;$("unseen").checked=UNSEEN;cachePrefs();
+    for(const id in opts)if(id!==ACTIVE_LIST)delete opts[id];
+    if(HOME&&!ACTIVE_LIST&&!$("sheet").classList.contains("open"))showHome()}}
+function restoreHomePosition(){const el=[...$("main").querySelectorAll(".lcard")].find(c=>c.dataset.id===PREFS.home_focus);if(el)el.scrollIntoView({block:"center"})}
+function restorePosition(id){const focus=((PREFS.lists||{})[id]||{}).focus_id;
+  if(!focus){window.scrollTo(0,0);return}const el=[...$("main").querySelectorAll(".p")].find(p=>current[+p.dataset.n]?.id===focus);
+  if(el){RESTORING=true;el.scrollIntoView({block:"center"});setTimeout(()=>RESTORING=false,500)}}
+let scrollTimer,userScrollUntil=0;
+for(const event of ["wheel","touchmove"])window.addEventListener(event,()=>userScrollUntil=Date.now()+1800,{passive:true});
+window.addEventListener("keydown",e=>{if(["ArrowDown","ArrowUp","PageDown","PageUp","Home","End"," "].includes(e.key))userScrollUntil=Date.now()+1800});
+window.addEventListener("scroll",()=>{if(Date.now()>userScrollUntil||RESTORING||!ACTIVE_LIST||$("sheet").classList.contains("open"))return;clearTimeout(scrollTimer);scrollTimer=setTimeout(()=>{
+  const controls=$("quickControls");
+  const limit=Math.max(0,document.querySelector("header").getBoundingClientRect().bottom,controls.hidden?0:controls.getBoundingClientRect().bottom);
+  const el=[...$("main").querySelectorAll(".p")].find(p=>p.getBoundingClientRect().top>=limit),it=el&&current[+el.dataset.n];
+  if(it&&ACTIVE_LIST&&!$("sheet").classList.contains("open"))saveListPrefs(ACTIVE_LIST,{focus_id:it.id})},650)},{passive:true});
+function completionInfo(s){const r=s.last_result||{},o=s.outcome&&s.outcome!=="idle"?s.outcome:r.outcome;
+  if(o==="failed"||s.error)return{message:"A atualização falhou. Seus dados anteriores foram preservados.",error:true};
+  if(o==="partial")return{message:"Parte das fontes não atualizou. Abra Conexão para ver o motivo.",error:true};
+  if(o==="pending")return{message:`Há ${s.pending_offers??r.pending_offers??0} títulos aguardando atualização automática.`,error:false};
+  if(o==="success")return{message:"Atualização concluída.",error:false};
+  return{message:"Não foi possível confirmar a atualização. Confira a conexão.",error:true}}
+function badge(id,text,kind,compact=text){const e=$(id);e.title=text;e.setAttribute("aria-label",text);e.className=kind||"";e.innerHTML=`<span class="status-full">${esc(text)}</span><span class="status-short">${esc(compact)}</span>`}
+function showConnectionState(c){CONNECTION=c;updateConnectionDetails(c.data);badge("pcHealth","Computador conectado","good","PC conectado");badge("rokuHealth",c.roku.connected?"Roku conectado":"Roku sem conexão",c.roku.connected?"good":"bad",c.roku.connected?"Roku conectado":"Roku offline");
+  const d=c.data,r=d.last_result||{},failed=d.outcome==="failed"||r.outcome==="failed",stamp=d.synced_at?new Date(d.synced_at*1000).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"",partial=d.incomplete||r.outcome==="partial",pending=d.pending_offers||0,progress=d.total?`${d.done||0}/${d.total}`:"";
+  if(d.running)return badge("dataHealth",`Dados: atualizando${progress?" "+progress:"…"}`,"warn",progress?"Dados: "+progress:"Atualizando…");
+  if(failed)return badge("dataHealth","Dados: atualização falhou","bad","Dados: erro");
+  if(r.outcome==="partial")return badge("dataHealth","Dados: parte das fontes não atualizou","warn","Dados: parcial");
+  if(pending)return badge("dataHealth",`Dados: ${pending} títulos aguardando consulta`,"warn",`Dados: ${pending} pend.`);
+  badge("dataHealth",partial?"Dados: atualização parcial":stamp?"Dados: "+stamp:"Dados: sem atualização confirmada",partial?"warn":stamp?"good":"",partial?"Dados: parcial":stamp?stamp.replace(",",""):"Dados: —")}
+function markDisconnected(){badge("pcHealth","Computador sem conexão","bad","PC offline");badge("rokuHealth","Roku: não verificado","","Roku: —");badge("dataHealth","Dados: sem verificação recente","warn","Dados: —")}
+function updateConnectionDetails(d){if(!d)return;const coverage=$("connectionCoverage"),progress=$("connectionProgress"),problems=$("connectionProblems");
+  if(coverage&&d.coverage)coverage.textContent=`Disponibilidade atual: ${d.coverage.fresh} de ${d.coverage.total} títulos consultados nos últimos ${d.coverage.max_age_days||3} dias.${d.pending_offers?` Faltam ${d.pending_offers} títulos.`:""}`;
+  if(progress){progress.hidden=!d.running;progress.textContent=d.running?`${d.step||"Atualizando"}${d.total?` — ${d.done}/${d.total}`:""}`:""}
+  if(problems){const items=d.last_result?.problems||[];problems.hidden=!items.length;problems.innerHTML=items.length?"Última atualização:<br>"+items.map(esc).join("<br>"):""}}
+function openConnection(){const c=CONNECTION,details=c?`<p>Computador: <strong>conectado</strong><br>Roku: <strong>${c.roku.connected?"conectado":"sem conexão"}</strong>${c.roku.ip?" · "+esc(c.roku.ip):""}</p>
+  ${!c.roku.connected?`<p>${esc(c.roku.error)}</p>`:""}<p>No celular, no mesmo Wi-Fi:<br><a href="${esc(c.computer.url)}">${esc(c.computer.url)}</a></p>
+  <p>Endereço pelo nome do PC (depende do suporte do celular):<br><a href="${esc(c.computer.name_url)}">${esc(c.computer.name_url)}</a></p>
+  <p>Para manter o endereço numérico, reserve o IP do computador nas configurações DHCP do roteador.</p>
+  <p id="connectionCoverage"></p><p id="connectionProgress" hidden></p><p id="connectionProblems" hidden></p>`:
+  `<p>Não consegui verificar a conexão. Deixe o computador ligado e conecte os aparelhos ao mesmo Wi-Fi.</p>`;
+  $("box").innerHTML=`<button class="close" aria-label="Fechar">×</button><h2>Conexão</h2><div class="network-info">${details}</div><button class="btn primary" id="reconnect">Reconectar</button> <button class="btn" id="downloadChannel">Baixar canal para o Roku</button>`;
+  updateConnectionDetails(c?.data);
+  $("sheet").classList.add("open");$("box").querySelector(".close").onclick=()=>$("sheet").classList.remove("open");
+  $("reconnect").onclick=async()=>{const b=$("reconnect");b.disabled=true;b.textContent="Procurando…";
+    try{showConnectionState(await api("/api/reconnect",{}));await refreshPrefs();await loadHome();toast(CONNECTION.roku.connected?"Computador e Roku conectados.":"Computador conectado; Roku ainda não respondeu.",!CONNECTION.roku.connected);openConnection()}
+    catch{markDisconnected();toast("O computador não respondeu. Confira o Wi-Fi e o endereço usado.",true);b.disabled=false;b.textContent="Tentar novamente"}};
+  $("downloadChannel").onclick=async()=>{const b=$("downloadChannel");b.disabled=true;
+    try{const r=await fetch("/roku-channel.zip");if(!r.ok)throw Error((await r.json()).error||"Falha ao gerar o canal");const blob=await r.blob(),u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download="MinhaWatchlist.zip";a.click();setTimeout(()=>URL.revokeObjectURL(u),30000)}
+    catch(e){toast(e.message,true)}finally{b.disabled=false}}}
+async function pollStatus(){clearTimeout(monitorTimer);if(MONITORING){monitorTimer=setTimeout(pollStatus,500);return}MONITORING=true;
+  try{const s=await api("/api/status");LAST_STATUS=s;
+    if(s.running){syncWatching=true;$("sync").disabled=true;const pct=s.total?Math.round(100*s.done/s.total):0;
+      if(!ACTIVE_LIST)$("sub").innerHTML=`${esc(s.step)}${s.total?` — ${s.done}/${s.total}`:""}<div class="bar"><i style="width:${pct}%"></i></div>`}
+    else{$("sync").disabled=false;if(syncWatching&&s.completed_at&&s.started_at>=syncTarget){syncWatching=false;const r=completionInfo(s);await loadHome();toast(r.message,r.error,7000)}}
+    showConnectionState(await api("/api/connection"));await refreshPrefs();if(!HOME)await loadHome();if(Object.keys(PENDING).length&&!SAVING)flushPrefs();
+  }catch{markDisconnected()}finally{MONITORING=false}monitorTimer=setTimeout(pollStatus,LAST_STATUS?.running?2500:10000)}
 
 // ---------- eventos ----------
 $("main").onclick=e=>{
-  const c=e.target.closest(".lcard"); if(c)return go("#l/"+encodeURIComponent(c.dataset.id));
+  const c=e.target.closest(".lcard"); if(c){queuePrefs({home_focus:c.dataset.id});return go("#l/"+encodeURIComponent(c.dataset.id))}
   const p=e.target.closest(".p"); if(p)openTitle(current[+p.dataset.n]);
 };
 // toda tela interna fica logo acima da inicial no histórico, então voltar sempre leva para ela
@@ -377,18 +482,20 @@ $("searchForm").onsubmit=async e=>{e.preventDefault();const q=$("q").value.trim(
   const d=await api("/api/roku/search?q="+encodeURIComponent(q));Object.assign(DET,d.details||{});SEARCH={q,items:d.items||[]};opts.search=defaults("search");$("q").blur();go("#s/"+encodeURIComponent(q))};
 $("unseen").checked=UNSEEN;
 $("unseen").onchange=()=>{UNSEEN=$("unseen").checked;try{localStorage.setItem("unseen",UNSEEN?"1":"0")}catch{}
-  for(const k in opts)opts[k].seen=UNSEEN?1:0;
+  queuePrefs({unseen:UNSEEN});for(const k in opts)opts[k].seen=UNSEEN?1:0;
   showHome()};
 $("sheet").onclick=e=>{if(e.target.id==="sheet")$("sheet").classList.remove("open")};
 document.addEventListener("keydown",e=>{if(e.key==="Escape")$("sheet").classList.remove("open")});
-$("sync").onclick=async()=>{await api("/api/sync",{});toast("Atualizando listas e disponibilidade…");pollWas=true;setTimeout(pollStatus,800)};
+$("connection").onclick=openConnection;
+$("sync").onclick=async()=>{const b=$("sync");b.disabled=true;try{const r=await api("/api/sync",{});syncTarget=r.status.started_at||0;syncWatching=true;toast("Atualizando listas e disponibilidade…");pollStatus()}catch{b.disabled=false;markDisconnected();toast("Não foi possível iniciar a atualização.",true)}};
 $("fab").onclick=()=>$("remote").classList.toggle("open");
-document.querySelectorAll(".pad button").forEach(b=>b.onclick=async()=>{const r=await api("/api/key",{key:b.dataset.k});if(!r.ok)toast(r.error||"Falhou",true)});
+document.querySelectorAll(".pad button").forEach(b=>b.onclick=async()=>{try{const r=await api("/api/key",{key:b.dataset.k});if(!r.ok)toast(r.error||"Falhou",true)}catch{markDisconnected();toast("O computador não respondeu.",true)}});
 
 // abriu direto numa lista (recarregou ou atalho): põe a tela inicial embaixo, para o voltar
 // (a seta ou o botão do celular) cair nela em vez de sair da página
 if(location.hash&&location.hash!=="#"){const h=location.hash;history.replaceState(null,"","#");history.pushState(null,"",h)}
-loadHome().then(pollStatus).catch(()=>{$("main").innerHTML=`<div class="empty">Não consegui falar com o computador.</div>`});
+async function boot(){try{await refreshPrefs();await loadHome()}catch{markDisconnected();$("main").innerHTML=`<div class="empty">Não consegui falar com o computador. Abra Conexão para tentar novamente.</div>`}pollStatus()}
+boot();
 </script>
 </body>
 </html>

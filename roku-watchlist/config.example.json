@@ -1,0 +1,90 @@
+{
+  "port": 8790,
+  "roku_ip": "192.168.1.100",
+  "imdb_user": "ur0000000",
+  "auto_lists": true,
+  "watchlist_list_id": "",
+  "lists": [
+    {
+      "id": "watchlist",
+      "name": "Watchlist"
+    },
+    {
+      "id": "rated8",
+      "name": "Vistos com nota 8+"
+    },
+    {
+      "id": "award:oscar",
+      "name": "Oscar"
+    },
+    {
+      "id": "award:cannes",
+      "name": "Cannes"
+    },
+    {
+      "id": "award:veneza",
+      "name": "Veneza"
+    },
+    {
+      "id": "award:berlim",
+      "name": "Berlim"
+    },
+    {
+      "id": "award:sundance",
+      "name": "Sundance"
+    }
+  ],
+  "services": [
+    {
+      "name": "Netflix",
+      "match": [
+        "netflix"
+      ]
+    },
+    {
+      "name": "Prime Video",
+      "match": [
+        "amazonprimevideo"
+      ]
+    },
+    {
+      "name": "Universal+",
+      "match": [
+        "amazonuniversalplus"
+      ]
+    },
+    {
+      "name": "Filmelier",
+      "match": [
+        "*filmelier"
+      ]
+    },
+    {
+      "name": "HBO Max",
+      "match": [
+        "max",
+        "hbomax"
+      ]
+    },
+    {
+      "name": "Disney+",
+      "match": [
+        "disneyplus"
+      ]
+    },
+    {
+      "name": "Apple TV",
+      "match": [
+        "appletvplus"
+      ]
+    },
+    {
+      "name": "Paramount+",
+      "match": [
+        "paramountplus"
+      ]
+    }
+  ],
+  "after_launch": {},
+  "offers_max_age_days": 3
+}

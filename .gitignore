@@ -3,3 +3,20 @@ roku-watchlist/data/
 roku-watchlist/MinhaWatchlist.zip
 __pycache__/
 *.pyc
+roku-watchlist/roku-channel/out/
+
+# Configuração pessoal e relatórios locais de manutenção
+roku-watchlist/config.json
+roku-watchlist/*20??-??-??.md
+
+# Ambientes, dependências e credenciais locais
+.venv/
+venv/
+node_modules/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.DS_Store
+Thumbs.db

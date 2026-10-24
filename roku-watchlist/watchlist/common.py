@@ -27,11 +27,13 @@ def load_json(path, default):
         return default
 
 
-def save_json(path, data):
+def save_json(path, data, indent=None):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     tmp = f"{path}.{threading.get_ident()}.tmp"   # um temporário por thread
     with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False)
+        json.dump(data, f, ensure_ascii=False, indent=indent)
+        if indent is not None:
+            f.write("\n")
     # no Windows, substituir falha enquanto outra thread lê o arquivo: espera e tenta de novo
     for attempt in range(10):
         try:
@@ -44,6 +46,10 @@ def save_json(path, data):
 
 
 CONFIG = load_json(CONFIG_PATH, {})
+
+
+def server_port():
+    return int(os.environ.get("PORT") or CONFIG.get("port", 8790))
 
 lock = threading.Lock()
 state = {"running": False, "step": "", "done": 0, "total": 0, "error": None}
@@ -66,7 +72,8 @@ log = _logger()
 def lan_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
-        s.connect(("8.8.8.8", 80))
+        # Prefere a rota da TV quando há também uma VPN ativa.
+        s.connect((CONFIG.get("roku_ip") or "8.8.8.8", 8060))
         return s.getsockname()[0]
     except OSError:
         return "127.0.0.1"

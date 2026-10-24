@@ -19,6 +19,7 @@ sub init()
     m.dPoster = m.top.findNode("dPoster")
     m.dTitle = m.top.findNode("dTitle")
     m.dMeta = m.top.findNode("dMeta")
+    m.dTitles = m.top.findNode("dTitles")
     m.dInfo = m.top.findNode("dInfo")
     m.dGenres = m.top.findNode("dGenres")
     m.dAwards = m.top.findNode("dAwards")
@@ -45,9 +46,11 @@ sub init()
     m.results = ["Indicados e vencedores", "Só vencedores", "Só indicados"]
     m.kinds = ["Filmes e séries", "Só filmes", "Só séries"]
     m.durs = ["Qualquer duração", "Até 1h40", "Até 2h", "Mais de 2h"]
+    m.seriesDurs = ["Qualquer duração", "Até 5h", "5h–10h", "10h–20h", "20h–30h", "30h–50h", "50h–100h", "Mais de 100h", "Duração desconhecida"]
     m.seens = ["Vistos e não vistos", "Só os que não vi"]     ' "visto" = tem nota sua no IMDb
     ' "Só os que não vi" da tela inicial (Play): vale para todas as listas e fica guardado
     m.unseen = (CreateObject("roRegistrySection", "watchlist").Read("unseen") = "1")
+    initPreferences()
     resetOptions()
 
     m.home.observeField("itemSelected", "onHomeSelected")
@@ -94,6 +97,22 @@ sub init()
     m.cachedTask.mode = "cached"
     m.cachedTask.control = "RUN"
     startFeed(false)
+    refreshPreferences()
+    m.feedRefreshTimer = m.top.findNode("feedRefreshTimer")
+    m.feedRefreshTimer.observeField("fire", "refreshHomeFeed")
+    m.feedRefreshTimer.control = "start"
+end sub
+
+' Mantém o status da inicial atual, inclusive quando uma sincronização termina no PC.
+sub refreshHomeFeed()
+    if m.screen <> "home" or m.details.visible then return
+    if m.top.dialog <> invalid then
+        if m.top.dialog.visible then return
+    end if
+    if m.feedTask <> invalid then
+        if m.feedTask.state = "run" then return
+    end if
+    startFeed(false)
 end sub
 
 ' full = true: pede o feed inteiro mesmo que a cópia guardada pareça atual
@@ -109,7 +128,7 @@ end sub
 sub resetOptions()
     seen = 0
     if m.unseen then seen = 1
-    m.opts = { sort: 0, lang: "", service: "", genre: "", director: "", kind: 0, dur: 0, seen: seen, acat: "", ayear: "", ares: 0 }
+    m.opts = { sort: 0, lang: "", service: "", genre: "", director: "", kind: 0, dur: 0, seriesDur: 0, seen: seen, acat: "", ayear: "", ares: 0 }
 end sub
 
 ' ---------- carregamento ----------
@@ -210,6 +229,11 @@ sub buildCards()
     end for
     keep = m.home.itemFocused
     m.home.content = root
+    if keep <= 0 and m.prefs.home_focus <> invalid then
+        for i = 0 to m.feed.rows.Count() - 1
+            if m.feed.rows[i].id = m.prefs.home_focus then keep = i
+        end for
+    end if
     if keep > 0 and keep < root.getChildCount() then m.home.jumpToItem = keep
     flushPosters()
 end sub
@@ -219,6 +243,7 @@ sub toggleUnseen()
     sec = CreateObject("roRegistrySection", "watchlist")
     if m.unseen then sec.Write("unseen", "1") else sec.Write("unseen", "0")
     sec.Flush()
+    queuePreferences({ unseen: m.unseen })
     m.listKey = ""
     m.awardKey = ""
     buildCards()
@@ -226,8 +251,8 @@ sub toggleUnseen()
 end sub
 
 function homeHint() as string
-    if m.unseen then return "*  buscar      Play  mostrar todos"
-    return "*  buscar      Play  só os que não vi"
+    if m.unseen then return "* buscar  |  ↺ conexão  |  Play todos"
+    return "* buscar  |  ↺ conexão  |  Play não vistos"
 end function
 
 function coverAt(covers as dynamic, i as integer) as string
@@ -238,9 +263,16 @@ end function
 ' Textos que o servidor não repete e o endereço da capa (guardada no Roku, se já tiver).
 sub prepItems(items as object)
     for each it in items
+        if it.ptTitle = invalid then it.ptTitle = it.title
+        if it.originalTitle = invalid then it.originalTitle = it.title
+        if it.showTitles = invalid then it.showTitles = false
+        if it.seriesMinutes = invalid then it.seriesMinutes = 0
+        if it.seriesEpisodes = invalid then it.seriesEpisodes = 0
+        if it.seriesEstimated = invalid then it.seriesEstimated = false
         it.genres = it.genreList.Join(", ")
         it.directors = it.directorList.Join(", ")
         it.sortTitle = LCase(it.title)
+        it.ptSearch = LCase(it.ptTitle)
         if it.strips = invalid then it.strips = []
         it.posterWeb = posterWeb(it.poster)
         it.poster = posterUri(it.poster)
@@ -297,8 +329,14 @@ function statusText() as string
         parts.Push("Sem conexão com o computador: mostrando os dados guardados")
     end if
     if st <> invalid then
-        if st.synced <> "" then parts.Push("Atualizado em " + st.synced)
-        if st.incomplete = true then parts.Push("ainda consultando alguns títulos")
+        if st.synced <> "" then parts.Push("Dados consultados em " + st.synced)
+        pending = 0
+        if st.pending_offers <> invalid then pending = st.pending_offers
+        if pending > 0 then
+            parts.Push(pending.ToStr() + " títulos aguardando consulta de disponibilidade")
+        else if st.incomplete = true then
+            parts.Push("Parte das fontes não atualizou; veja Conexão")
+        end if
         if st.error <> "" then parts.Push("Última atualização falhou: " + st.error)
     end if
     return parts.Join("   ·   ")
@@ -331,6 +369,7 @@ end sub
 
 sub onHomeSelected()
     m.rowIndex = m.home.itemSelected
+    queuePreferences({ home_focus: m.feed.rows[m.rowIndex].id })
     row = m.feed.rows[m.rowIndex]
     if m.loaded.DoesExist(row.id) then
         openRow()
@@ -409,6 +448,10 @@ sub openRow()
     ' padrão: maior nota do IMDb primeiro (novidades seguem da mais recente para a mais antiga)
     rid = m.feed.rows[m.rowIndex].id
     if rid <> "new" and rid <> "recent" then m.opts.sort = 1
+    saved = rowPreferences()
+    for each key in m.opts
+        if saved.DoesExist(key) then m.opts[key] = saved[key]
+    end for
     if m.feed.rows[m.rowIndex].award = true then
         showAwards()
     else
@@ -447,6 +490,23 @@ function passes(it as object) as boolean
     if o.dur = 1 and (it.runtime = 0 or it.runtime > 100) then return false
     if o.dur = 2 and (it.runtime = 0 or it.runtime > 120) then return false
     if o.dur = 3 and it.runtime <= 120 then return false
+    if o.seriesDur > 0 and it.series then
+        minutes = it.seriesMinutes
+        matches = false
+        limits = [0, 300, 600, 1200, 1800, 3000, 6000]
+        if o.seriesDur = 8 then
+            matches = minutes = 0
+        else if minutes > 0 then
+            if o.seriesDur = 1 then
+                matches = minutes <= limits[1]
+            else if o.seriesDur = 7 then
+                matches = minutes > limits[6]
+            else
+                matches = minutes > limits[o.seriesDur - 1] and minutes <= limits[o.seriesDur]
+            end if
+        end if
+        if not matches then return false
+    end if
     if o.director <> "" and not contains(it.directorList, o.director) then return false
     if o.acat <> "" or o.ayear <> "" or o.ares > 0 then
         ok = false
@@ -495,10 +555,18 @@ sub rebuildView()
         end if
         addPosterNode(root, it, line, it.strips)
     end for
+    m.restoringPosition = true
     m.grid.content = root
     if view.Count() > 0 then
-        m.grid.jumpToItem = 0
-        showFocusInfo(view[0])
+        focus = 0
+        saved = rowPreferences()
+        if saved.DoesExist("focus_id") then
+            for i = 0 to view.Count() - 1
+                if view[i].id = saved.focus_id then focus = i
+            end for
+        end if
+        m.grid.jumpToItem = focus
+        showFocusInfo(view[focus])
     else
         m.focusInfo.text = ""
     end if
@@ -510,6 +578,7 @@ sub rebuildView()
     m.subtitle.text = parts.Join("   ·   ")
     m.message.visible = (view.Count() = 0)
     if view.Count() = 0 then m.message.text = "Nada com esses filtros. Aperte * para mudar."
+    m.restoringPosition = false
     m.listSubtitle = m.subtitle.text
     m.listKey = m.rowIndex.ToStr() + FormatJson(m.opts)
 end sub
@@ -522,6 +591,7 @@ function activeFilters() as string
     if o.genre <> "" then f.Push(o.genre)
     if o.kind > 0 then f.Push(m.kinds[o.kind])
     if o.dur > 0 then f.Push(m.durs[o.dur])
+    if o.seriesDur > 0 then f.Push("Total: " + m.seriesDurs[o.seriesDur])
     if o.seen > 0 then f.Push(m.seens[o.seen])
     if o.director <> "" then f.Push(o.director)
     if o.acat <> "" then f.Push(o.acat)
@@ -535,6 +605,10 @@ end function
 ' depois as de outros festivais em que o filme venceu, sem repetir o ícone skipIcon.
 function awardStrips(first as dynamic, it as object, skipIcon as string) as object
     s = []
+    if it.series then
+        if it.strips.Count() > 0 then s.Push(it.strips[0])
+        return s
+    end if
     if first <> invalid then s.Push(first)
     for each x in it.strips
         if s.Count() < 2 and x.w = true and x.i <> skipIcon then s.Push(x)
@@ -543,6 +617,10 @@ function awardStrips(first as dynamic, it as object, skipIcon as string) as obje
 end function
 
 sub addPosterNode(parent as object, it as object, line as string, strips as object)
+    if it.series then
+        strips = []
+        if it.strips.Count() > 0 then strips.Push(it.strips[0])
+    end if
     node = parent.createChild("ContentNode")
     node.title = it.title
     node.HDPosterUrl = it.poster
@@ -568,6 +646,7 @@ end sub
 sub onGridFocused()
     i = m.grid.itemFocused
     if i >= 0 and i < m.view.Count() then showFocusInfo(m.view[i])
+    rememberPosition()
 end sub
 
 ' Faixa acima da grade: só o que NÃO aparece no pôster (título, notas, serviço e
@@ -576,6 +655,7 @@ sub showFocusInfo(it as object)
     parts = []
     if it.directors <> "" then parts.Push("Direção: " + it.directors)
     if it.runtime > 0 then parts.Push(formatRuntime(it.runtime))
+    if it.series and it.seriesMinutes > 0 then parts.Push(seriesRuntimeText(it))
     genres = []
     for each g in it.genreList
         if genres.Count() < 3 then genres.Push(g)
@@ -584,6 +664,14 @@ sub showFocusInfo(it as object)
     parts.Push(it.lang)
     m.focusInfo.text = parts.Join("   ·   ")
 end sub
+
+function seriesRuntimeText(it as object) as string
+    prefix = ""
+    if it.seriesEstimated then prefix = "~"
+    label = prefix + formatRuntime(it.seriesMinutes)
+    if it.seriesEpisodes > 0 then label = label + " · " + it.seriesEpisodes.ToStr() + " episódios"
+    return label
+end function
 
 function rtText(it as object) as string
     t = []
@@ -616,8 +704,19 @@ end sub
 function catKeys() as object
     keys = ["sort"]
     if m.feed.rows[m.rowIndex].award = true then keys.Append(["acat", "ayear", "ares"])
-    keys.Append(["seen", "lang", "service", "genre", "director", "kind", "dur", "clear"])
+    keys.Append(["seen", "lang", "service", "genre", "director", "kind", "dur"])
+    if isSeriesRow() then keys.Push("seriesDur")
+    keys.Push("clear")
     return keys
+end function
+
+function isSeriesRow() as boolean
+    row = m.feed.rows[m.rowIndex]
+    if row.items.Count() = 0 then return false
+    for each it in row.items
+        if it.series <> true then return false
+    end for
+    return true
 end function
 
 function catLabels() as object
@@ -633,6 +732,7 @@ function catLabels() as object
         director: "Diretor:  " + iif(o.director, "Todos"),
         kind: "Tipo:  " + m.kinds[o.kind],
         dur: "Duração:  " + m.durs[o.dur],
+        seriesDur: "Duração total:  " + m.seriesDurs[o.seriesDur],
         seen: "Mostrar:  " + m.seens[o.seen],
         clear: "Limpar filtros"
     }
@@ -664,6 +764,7 @@ sub onCatSelected()
         keepSort = m.opts.sort
         resetOptions()
         m.opts.sort = keepSort
+        saveOptions()
         rebuildView()
         fillList(m.optCats, catLabels())
         return
@@ -683,6 +784,9 @@ sub onCatSelected()
     else if m.cat = "dur" then
         m.panelTitle.text = "Duração"
         fixed = m.durs
+    else if m.cat = "seriesDur" then
+        m.panelTitle.text = "Duração total da série"
+        fixed = m.seriesDurs
     else if m.cat = "seen" then
         m.panelTitle.text = "Mostrar"
         fixed = m.seens
@@ -767,6 +871,7 @@ end sub
 
 sub onValSelected()
     m.opts[m.cat] = m.choices[m.optVals.itemSelected]
+    saveOptions()
     rebuildView()
     closePanel()
 end sub
@@ -793,10 +898,20 @@ sub showDetails(it as object)
     meta = []
     if it.year <> "" then meta.Push(it.year)
     if it.runtime > 0 then meta.Push(formatRuntime(it.runtime))
+    if it.series and it.seriesMinutes > 0 then meta.Push(seriesRuntimeText(it))
     if it.rating <> "" then meta.Push("IMDb " + it.rating)
     if it.mine > 0 then meta.Push("Minha nota " + it.mine.ToStr())
     if it.rtC <> "" or it.rtA <> "" then meta.Push(rtText(it))
     m.dMeta.text = meta.Join("   ·   ")
+    titleNames = ""
+    if it.showTitles then
+        if it.originalTitle = it.ptTitle then
+            titleNames = "Original e português: " + it.originalTitle
+        else
+            titleNames = "Original: " + it.originalTitle + "   ·   Português: " + it.ptTitle
+        end if
+    end if
+    m.dTitles.text = titleNames
     d = m.feed.details[it.id]
     if d = invalid then d = { plot: "", cast: "", awardText: "", country: "", play: [] }
     m.currentDetails = d
@@ -821,6 +936,7 @@ sub showDetails(it as object)
     end for
     m.dButtons.buttons = labels
     m.dStatus.text = ""
+    if d.availabilityChecked <> invalid and d.availabilityChecked <> "" then m.dStatus.text = "Disponibilidade consultada em " + d.availabilityChecked
     m.details.visible = true
     m.dButtons.setFocus(true)
 end sub
@@ -884,6 +1000,10 @@ end sub
 
 function onKeyEvent(key as string, press as boolean) as boolean
     if not press then return false
+    if key = "replay" and not m.details.visible then
+        openConnection()
+        return true
+    end if
     if m.feed = invalid and key = "OK" and m.feedTask.state <> "run" then
         m.message.text = "Tentando de novo..."
         startFeed(false)
@@ -917,6 +1037,7 @@ function onKeyEvent(key as string, press as boolean) as boolean
     end if
     if m.screen = "awards" then
         if key = "back" then
+            rememberPosition()
             showHome()
             return true
         else if key = "right" and m.years.hasFocus() then
@@ -933,6 +1054,7 @@ function onKeyEvent(key as string, press as boolean) as boolean
     end if
     if m.screen = "list" then
         if key = "back" then
+            rememberPosition()
             showHome()
             return true
         else if key = "options" then
@@ -1000,8 +1122,15 @@ sub showAwards()
         return
     end if
     m.message.visible = false
-    m.years.jumpToItem = 0
-    buildAwardRows(m.yearList[0].y)
+    yearFocus = 0
+    saved = rowPreferences()
+    if saved.DoesExist("award_year") then
+        for i = 0 to m.yearList.Count() - 1
+            if m.yearList[i].y = saved.award_year then yearFocus = i
+        end for
+    end if
+    m.years.jumpToItem = yearFocus
+    buildAwardRows(m.yearList[yearFocus].y)
     m.years.setFocus(true)
 end sub
 
@@ -1079,13 +1208,23 @@ sub buildAwardRows(year as string)
         m.awardView.Push(items)
     end if
     m.awardRows.content = root
+    saved = rowPreferences()
+    if saved.DoesExist("focus_id") then
+        for r = 0 to m.awardView.Count() - 1
+            for c = 0 to m.awardView[r].Count() - 1
+                if m.awardView[r][c].id = saved.focus_id then m.awardRows.jumpToRowItem = [r, c]
+            end for
+        end for
+    end if
     if m.awardView.Count() > 0 and m.awardView[0].Count() > 0 then showFocusInfo(m.awardView[0][0])
+    saveRowPreferences({ award_year: year })
 end sub
 
 sub onAwardFocused()
     f = m.awardRows.rowItemFocused
     if f = invalid or f.Count() < 2 then return
     if f[0] < m.awardView.Count() and f[1] < m.awardView[f[0]].Count() then showFocusInfo(m.awardView[f[0]][f[1]])
+    rememberPosition()
 end sub
 
 sub onAwardSelected()
@@ -1117,7 +1256,7 @@ end sub
 sub openSearch()
     kd = CreateObject("roSGNode", "StandardKeyboardDialog")
     kd.title = "Buscar título"
-    kd.message = ["Busca em todas as listas, pelo título em português ou original."]
+    kd.message = ["Busca pelo título em inglês, original ou em português."]
     kd.buttons = ["Buscar", "Cancelar"]
     kd.observeField("buttonSelected", "onSearchButton")
     m.searchDialog = kd
@@ -1159,7 +1298,7 @@ sub onSearchError()
     for each row in m.feed.rows
         if row.id <> "search" and row.items <> invalid then
             for each it in row.items
-                if not seen.DoesExist(it.id) and (Instr(1, it.sortTitle, q) > 0 or Instr(1, it.orig, q) > 0) then
+                if not seen.DoesExist(it.id) and (Instr(1, it.sortTitle, q) > 0 or Instr(1, it.orig, q) > 0 or Instr(1, it.ptSearch, q) > 0) then
                     seen[it.id] = true
                     copy = {}
                     copy.Append(it)

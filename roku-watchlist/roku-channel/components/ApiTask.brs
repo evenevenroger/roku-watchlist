@@ -13,7 +13,28 @@ end sub
 
 sub doWork()
     mode = m.top.mode
-    if mode = "cached" then
+    if mode = "preferences" or mode = "saveprefs" or mode = "connection" then
+        method = "GET"
+        endpoint = "/api/preferences"
+        payload = ""
+        if mode = "saveprefs" then
+            method = "POST"
+            payload = FormatJson(m.top.body)
+        else if mode = "connection" then
+            method = "POST"
+            endpoint = "/api/reconnect"
+            payload = "{}"
+        end if
+        text = request(method, serverUrl() + endpoint, payload, 15000)
+        if text = invalid and relocateServer() then text = request(method, serverUrl() + endpoint, payload, 15000)
+        data = invalid
+        if text <> invalid then data = ParseJson(text)
+        if data = invalid then
+            m.top.error = "O computador não respondeu. Confira o Wi-Fi e tente novamente."
+        else
+            m.top.result = data
+        end if
+    else if mode = "cached" then
         DeleteFile("cachefs:/feed.json")          ' cópia inteira dos builds 8-11, não é mais usada
         DeleteFile("cachefs:/feed.version")
         text = ReadAsciiFile(homePath())
@@ -46,6 +67,7 @@ sub doWork()
     else if mode = "search" then
         xfer = CreateObject("roUrlTransfer")
         text = request("GET", serverUrl() + "/api/roku/search?q=" + xfer.Escape(m.top.body.q), "", 15000)
+        if text = invalid and relocateServer() then text = request("GET", serverUrl() + "/api/roku/search?q=" + xfer.Escape(m.top.body.q), "", 15000)
         data = invalid
         if text <> invalid then data = ParseJson(text)
         if data = invalid then
@@ -101,6 +123,7 @@ sub loadRow(id as string, want as string)
     xfer = CreateObject("roUrlTransfer")
     url = serverUrl() + "/api/roku/list?id=" + xfer.Escape(id) + "&v=" + have
     text = request("GET", url, "", 20000)
+    if text = invalid and relocateServer() then text = request("GET", serverUrl() + "/api/roku/list?id=" + xfer.Escape(id) + "&v=" + have, "", 20000)
     data = invalid
     if text <> invalid then data = ParseJson(text)
     if data <> invalid and data.DoesExist("same") and cached <> invalid then

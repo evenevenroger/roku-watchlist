@@ -2,6 +2,7 @@
 <component name="MainScene" extends="Scene">
   <script type="text/brightscript" uri="pkg:/components/config.brs" />
   <script type="text/brightscript" uri="pkg:/components/MainScene.brs" />
+  <script type="text/brightscript" uri="pkg:/components/Preferences.brs" />
   <children>
     <Rectangle width="1920" height="1080" color="0x0E0F13FF" />
 
@@ -37,6 +38,9 @@
       <Font role="focusedFont" uri="font:BoldSystemFontFile" size="30" />
     </LabelList>
     <Timer id="yearTimer" duration="0.25" repeat="false" />
+    <Timer id="prefsTimer" duration="15" repeat="true" />
+    <Timer id="savePrefsTimer" duration="0.7" repeat="false" />
+    <Timer id="feedRefreshTimer" duration="60" repeat="true" />
     <Rectangle id="yearsLine" translation="[322,222]" width="2" height="820" color="0x262932FF" visible="false" />
     <RowList id="awardRows" translation="[360,222]" visible="false"
              itemComponentName="PosterItem"
@@ -70,10 +74,11 @@
       <Label id="dTitle" translation="[620,130]" width="1180" wrap="true" maxLines="2"
              color="0xECEEF3FF" font="font:LargeBoldSystemFont" />
       <Label id="dMeta" translation="[620,250]" width="1180" color="0xF5C518FF" font="font:MediumSystemFont" />
-      <Label id="dInfo" translation="[620,305]" width="1180" maxLines="1" color="0x9AA0ADFF" font="font:SmallSystemFont" />
-      <Label id="dGenres" translation="[620,345]" width="1180" maxLines="1" color="0x9AA0ADFF" font="font:SmallSystemFont" />
-      <Label id="dAwards" translation="[620,385]" width="1180" wrap="true" maxLines="2" color="0xE3C16FFF" font="font:SmallestSystemFont" />
-      <Label id="dPlot" translation="[620,460]" width="1180" height="200" wrap="true" maxLines="5"
+      <Label id="dTitles" translation="[620,305]" width="1180" height="48" wrap="true" maxLines="2" color="0x9AA0ADFF" font="font:SmallSystemFont" />
+      <Label id="dInfo" translation="[620,360]" width="1180" maxLines="1" color="0x9AA0ADFF" font="font:SmallSystemFont" />
+      <Label id="dGenres" translation="[620,395]" width="1180" maxLines="1" color="0x9AA0ADFF" font="font:SmallSystemFont" />
+      <Label id="dAwards" translation="[620,435]" width="1180" wrap="true" maxLines="2" color="0xE3C16FFF" font="font:SmallestSystemFont" />
+      <Label id="dPlot" translation="[620,510]" width="1180" height="180" wrap="true" maxLines="5"
              color="0xCFD3DCFF" font="font:SmallSystemFont" />
       <ButtonGroup id="dButtons" translation="[620,690]" minWidth="700" />
       <Label id="dStatus" translation="[620,960]" width="1180" wrap="true" color="0x9AA0ADFF"
