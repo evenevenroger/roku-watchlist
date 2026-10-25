@@ -10,12 +10,13 @@ import urllib.parse
 import socket
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from .common import CACHE_PATH, CHANNEL_DIR, CONFIG, STATIC, lan_ip, load_json, log, state, server_port
+from .common import CACHE_PATH, CHANNEL_DIR, CYCLING_CHANNEL_DIR, CONFIG, STATIC, lan_ip, load_json, log, state, server_port
 from .data import build_payload, sync, start_sync, sync_status, sync_action
 from .preferences import get_preferences, update_preferences
 from .feed import build_channel_zip, record_play, roku_feed, roku_home, roku_list, roku_search
 from .roku import KEYS, play_link, roku_post, roku_health
 from .rottentomatoes import rt_worker
+from .cycling import cycling_feed, cycling_worker
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -90,6 +91,14 @@ class Handler(BaseHTTPRequestHandler):
             if fmt >= 4:                            # canal build 12+: só os cartões da tela inicial
                 return self.send(200, roku_home(arg("v")))
             return self.send(200, roku_feed(fmt, arg("v")))
+        if path == "/api/ciclismo":
+            return self.send(200, cycling_feed())
+        if path == "/ciclismo-channel.zip":
+            try:
+                package = build_channel_zip(channel_dir=CYCLING_CHANNEL_DIR)
+            except ValueError as exc:
+                return self.send(503, {"error": str(exc)})
+            return self.send(200, package, "application/zip")
         if path == "/roku-channel.zip":
             try:
                 package = build_channel_zip()
@@ -195,6 +204,7 @@ def main():
     threading.Thread(target=auto_sync, name="sync", daemon=True).start()
     threading.Thread(target=rt_worker, name="rt", daemon=True).start()
     threading.Thread(target=keep_awake, name="awake", daemon=True).start()
+    threading.Thread(target=cycling_worker, name="ciclismo", daemon=True).start()
     log.info("servidor no ar na porta %s", port)
     print(f"Watchlist → Roku rodando:\n  neste PC:  http://localhost:{port}\n"
           f"  no celular (mesmo Wi-Fi):  http://{lan_ip()}:{port}\nCtrl+C para parar.")

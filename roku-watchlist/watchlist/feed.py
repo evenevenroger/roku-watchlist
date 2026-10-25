@@ -398,8 +398,9 @@ def _pick_covers(rows, oscar, keep):
     return out
 
 
-def build_channel_zip(host=None):
-    """Empacota o canal com o endereço deste servidor embutido."""
+def build_channel_zip(host=None, channel_dir=None):
+    """Empacota um canal (o da watchlist ou o de ciclismo) com o endereço deste servidor embutido."""
+    channel_dir = channel_dir or CHANNEL_DIR
     ip = ipaddress.ip_address(lan_ip())
     if ip.version != 4 or not ip.is_private or ip.is_loopback or ip.is_link_local:
         raise ValueError("Conecte o computador ao Wi-Fi do Roku antes de gerar o canal.")
@@ -415,15 +416,15 @@ def build_channel_zip(host=None):
         raise ValueError("Servidor indisponível no endereço do canal: " + server) from exc
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
-        for root, dirs, files in os.walk(CHANNEL_DIR, followlinks=False):
+        for root, dirs, files in os.walk(channel_dir, followlinks=False):
             dirs[:] = sorted(d for d in dirs if not d.startswith(".") and d not in ("out", "node_modules", "__pycache__")
                              and not os.path.islink(os.path.join(root, d))
                              and not os.path.isjunction(os.path.join(root, d)))
-            if root == CHANNEL_DIR:
+            if root == channel_dir:
                 dirs[:] = [d for d in dirs if d in ("source", "components", "images")]
             for name in sorted(files):
                 full = os.path.join(root, name)
-                rel = os.path.relpath(full, CHANNEL_DIR).replace(os.sep, "/")
+                rel = os.path.relpath(full, channel_dir).replace(os.sep, "/")
                 if os.path.islink(full) or not (rel == "manifest" or
                         (rel.split("/")[0] in ("source", "components", "images") and
                          rel.lower().endswith((".brs", ".xml", ".png", ".jpg", ".jpeg")))):

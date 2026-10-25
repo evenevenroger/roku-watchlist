@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cartão de uma prova na tela inicial: tipo, nome, datas, país e onde assistir. -->
+<component name="RaceCard" extends="Group">
+  <interface>
+    <field id="itemContent" type="node" onChange="onContent" />
+    <field id="focusPercent" type="float" onChange="onFocus" />
+  </interface>
+  <script type="text/brightscript" uri="pkg:/components/RaceCard.brs" />
+  <children>
+    <Rectangle id="bg" width="430" height="250" color="0x1A1D26FF" />
+    <Rectangle id="band" width="430" height="8" color="0xE3C16FFF" />
+    <Label id="kind" translation="[22,24]" width="300" font="font:SmallestBoldSystemFont" color="0xE3C16FFF" />
+    <Label id="live" translation="[248,22]" width="160" horizAlign="right" font="font:SmallestBoldSystemFont"
+           color="0xFF5A5AFF" text="AO VIVO" visible="false" />
+    <Label id="name" translation="[22,56]" width="386" maxLines="2" wrap="true" lineSpacing="2"
+           font="font:SmallBoldSystemFont" color="0xECEEF3FF" />
+    <Label id="when" translation="[22,136]" width="386" maxLines="1" font="font:SmallestSystemFont" color="0xCFD3DCFF" />
+    <Label id="br" translation="[22,172]" width="386" maxLines="1" font="font:SmallestSystemFont" color="0x9AA0ADFF" />
+    <Label id="vpn" translation="[22,204]" width="386" maxLines="1" font="font:SmallestSystemFont" color="0x9AA0ADFF" />
+  </children>
+</component>
