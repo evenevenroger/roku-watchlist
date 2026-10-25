@@ -1,0 +1,418 @@
+{
+  "races": {
+    "tour-down-under": {
+      "br": [],
+      "abroad": [
+        {"service": "7plus (Seven Network)", "country": "AU", "lang": "en", "free": true, "note": "transmissora oficial na Austrália; precisa de conta gratuita"},
+        {"service": "La Chaîne L'Équipe / lequipe.fr", "country": "FR", "lang": "fr", "free": true, "note": "cobertura parcial ao vivo; confirmar grade"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "todas as etapas"},
+        {"service": "FloBikes", "country": "CA", "lang": "en", "free": false, "note": "assinatura"}
+      ],
+      "confidence": "medium",
+      "sources": ["https://veloracycling.com/how-to-watch/tour-down-under", "https://www.domestiquecycling.com/en/news/how-to-watch-the-2026-santos-tour-down-under-streaming-and-tv-by-country/"]
+    },
+    "great-ocean-road-race": {
+      "br": [],
+      "abroad": [
+        {"service": "SBS On Demand", "country": "AU", "lang": "en", "free": true, "note": "parceria exclusiva SBS; conta gratuita com CEP australiano"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "FloBikes", "country": "US", "lang": "en", "free": false, "note": "assinatura"}
+      ],
+      "confidence": "medium",
+      "sources": ["https://www.domestiquecycling.com/en/news/how-to-watch-the-2026-cadel-evans-great-ocean-road-races-streaming-and-tv-by-country/", "https://tv-guide.icetv.com.au/show/Cycling:-Mapei-Cadel-Evans-Great-Ocean-Road-Race-tv-63678"]
+    },
+    "uae-tour": {
+      "br": [],
+      "abroad": [
+        {"service": "SBS On Demand", "country": "AU", "lang": "en", "free": true, "note": "corrida completa em 2026; conta gratuita"},
+        {"service": "UAE Tour (YouTube oficial)", "country": "US", "lang": "en", "free": true, "note": "stream do organizador; pode ter bloqueio geográfico"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "FloBikes", "country": "CA", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "HBO Max (Eurosport)", "country": "FR", "lang": "fr", "free": false, "note": "Eurosport dentro do HBO Max"}
+      ],
+      "confidence": "medium",
+      "sources": ["https://www.domestiquecycling.com/en/news/how-to-watch-the-2026-uae-tour-streaming-and-tv-by-country/", "https://www.techradar.com/how-to-watch/cycling/uae-tour-2026-free"]
+    },
+    "omloop-het-nieuwsblad": {
+      "br": [{"service": "Disney+ (ESPN)", "note": "provável: ESPN tem a América Latina nas corridas Flanders Classics; confirmar na grade"}],
+      "abroad": [
+        {"service": "RTL Play (RTL-TVi)", "country": "BE", "lang": "fr", "free": true, "note": "precisa de conta gratuita"},
+        {"service": "La Chaîne L'Équipe / lequipe.fr", "country": "FR", "lang": "fr", "free": true, "note": "TV aberta francesa"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "FloBikes", "country": "US", "lang": "en", "free": false, "note": "também no Canadá"}
+      ],
+      "confidence": "medium",
+      "sources": ["https://veloracycling.com/how-to-watch/omloop-nieuwsblad", "https://veloracycling.com/how-to-watch/dwars-door-vlaanderen"]
+    },
+    "strade-bianche": {
+      "br": [],
+      "abroad": [
+        {"service": "RTBF Auvio", "country": "BE", "lang": "fr", "free": true, "note": "precisa de conta gratuita"},
+        {"service": "SBS On Demand", "country": "AU", "lang": "en", "free": true, "note": "conta gratuita com CEP australiano"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "HBO Max", "country": "US", "lang": "en", "free": false, "note": "corridas RCS nos EUA; plano com esporte ao vivo"},
+        {"service": "HBO Max (Eurosport)", "country": "FR", "lang": "fr", "free": false, "note": "sem TV aberta na França"}
+      ],
+      "confidence": "medium",
+      "sources": ["https://veloracycling.com/how-to-watch/strade-bianche", "https://www.milanosanremo.it/en/news/where-to-watch-the-milano-sanremo-and-the-sanremo-women-2026-on-tv/"]
+    },
+    "paris-nice": {
+      "br": [{"service": "Disney+ (ESPN)", "note": "contrato ESPN-ASO para América Latina até 2027; plano com ESPN"}],
+      "abroad": [
+        {"service": "france.tv (France Télévisions)", "country": "FR", "lang": "fr", "free": true, "note": "precisa de conta gratuita"},
+        {"service": "RTBF Auvio", "country": "BE", "lang": "fr", "free": true, "note": "conta gratuita; confirmar quais etapas"},
+        {"service": "SBS On Demand", "country": "AU", "lang": "en", "free": true, "note": "conta gratuita; confirmar grade"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "todas as etapas"},
+        {"service": "Peacock", "country": "US", "lang": "en", "free": false, "note": "corridas ASO nos EUA"}
+      ],
+      "confidence": "high",
+      "sources": ["https://veloracycling.com/how-to-watch/paris-nice", "https://maquinadoesporte.com.br/outros/espn-renova-contrato-de-direitos-de-tv-da-volta-da-espanha-para-america-latina/", "https://digitaltveurope.com/2023/07/24/france-televisions-and-aso-renew-tour-de-france-agreement-until-2030"]
+    },
+    "tirreno-adriatico": {
+      "br": [],
+      "abroad": [
+        {"service": "SBS On Demand", "country": "AU", "lang": "en", "free": true, "note": "direitos por 3 anos a partir de 2026; conta gratuita"},
+        {"service": "RTBF Auvio", "country": "BE", "lang": "fr", "free": true, "note": "conta gratuita; confirmar etapas"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "HBO Max", "country": "US", "lang": "en", "free": false, "note": "corridas RCS nos EUA"},
+        {"service": "HBO Max (Eurosport)", "country": "FR", "lang": "fr", "free": false, "note": "assinatura"}
+      ],
+      "confidence": "medium",
+      "sources": ["https://veloracycling.com/how-to-watch/tirreno-adriatico", "https://www.sbs.com.au/aboutus/2026/03/20/feast-for-cycling-fans-as-sbs-extends-road-cycling-broadcasts-to-include-all-grand-tours-and-monuments/"]
+    },
+    "milano-sanremo": {
+      "br": [],
+      "abroad": [
+        {"service": "RTS Play", "country": "CH", "lang": "fr", "free": true, "note": "SRG tem os direitos; ao vivo só com IP suíço"},
+        {"service": "RTBF Auvio", "country": "BE", "lang": "fr", "free": true, "note": "conta gratuita"},
+        {"service": "SBS On Demand", "country": "AU", "lang": "en", "free": true, "note": "monumento ao vivo; conta gratuita"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "HBO Max (Eurosport)", "country": "FR", "lang": "fr", "free": false, "note": "sem TV aberta na França"}
+      ],
+      "confidence": "high",
+      "sources": ["https://www.milanosanremo.it/en/news/where-to-watch-the-milano-sanremo-and-the-sanremo-women-2026-on-tv/", "https://veloracycling.com/how-to-watch/milano-sanremo", "https://www.sbs.com.au/aboutus/2026/03/20/feast-for-cycling-fans-as-sbs-extends-road-cycling-broadcasts-to-include-all-grand-tours-and-monuments/"]
+    },
+    "volta-a-catalunya": {
+      "br": [],
+      "abroad": [
+        {"service": "SBS On Demand", "country": "AU", "lang": "en", "free": true, "note": "7 etapas ao vivo em 2026; conta gratuita"},
+        {"service": "RTBF Auvio (Tipik)", "country": "BE", "lang": "fr", "free": true, "note": "listado pelo organizador; cobertura incerta"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "HBO Max (Eurosport)", "country": "FR", "lang": "fr", "free": false, "note": "assinatura"},
+        {"service": "FloBikes", "country": "CA", "lang": "en", "free": false, "note": "assinatura"}
+      ],
+      "confidence": "medium",
+      "sources": ["https://veloracycling.com/how-to-watch/volta-ciclista-a-catalunya"]
+    },
+    "classic-brugge-de-panne": {
+      "br": [{"service": "Disney+ (ESPN)", "note": "provável (pacote Flanders Classics na América Latina); confirmar"}],
+      "abroad": [
+        {"service": "SBS On Demand", "country": "AU", "lang": "en", "free": true, "note": "conta gratuita; confirmar grade"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "FloBikes", "country": "US", "lang": "en", "free": false, "note": "também no Canadá"},
+        {"service": "HBO Max (Eurosport)", "country": "FR", "lang": "fr", "free": false, "note": "assinatura"}
+      ],
+      "confidence": "low",
+      "sources": ["https://veloracycling.com/how-to-watch/ronde-van-brugge"]
+    },
+    "e3-harelbeke": {
+      "br": [],
+      "abroad": [
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "FloBikes", "country": "US", "lang": "en", "free": false, "note": "também no Canadá"},
+        {"service": "HBO Max (Eurosport)", "country": "FR", "lang": "fr", "free": false, "note": "na Bélgica só VTM (em holandês)"}
+      ],
+      "confidence": "medium",
+      "sources": ["https://veloracycling.com/how-to-watch/e3-harelbeke"]
+    },
+    "gent-wevelgem": {
+      "br": [{"service": "Disney+ (ESPN)", "note": "provável (Flanders Classics/ESPN América Latina); confirmar"}],
+      "abroad": [
+        {"service": "La Chaîne L'Équipe / lequipe.fr", "country": "FR", "lang": "fr", "free": true, "note": "TV aberta francesa"},
+        {"service": "SBS On Demand", "country": "AU", "lang": "en", "free": true, "note": "conta gratuita"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "FloBikes", "country": "US", "lang": "en", "free": false, "note": "também no Canadá"}
+      ],
+      "confidence": "medium",
+      "sources": ["https://veloracycling.com/how-to-watch/gent-wevelgem"]
+    },
+    "dwars-door-vlaanderen": {
+      "br": [{"service": "Disney+ (ESPN)", "note": "organizador lista ESPN para a América Latina; Brasil não citado à parte"}],
+      "abroad": [
+        {"service": "RTL Play (RTL-TVi)", "country": "BE", "lang": "fr", "free": true, "note": "conta gratuita"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "FloBikes", "country": "US", "lang": "en", "free": false, "note": "também no Canadá e Austrália"},
+        {"service": "HBO Max (Eurosport)", "country": "FR", "lang": "fr", "free": false, "note": "assinatura"}
+      ],
+      "confidence": "medium",
+      "sources": ["https://veloracycling.com/how-to-watch/dwars-door-vlaanderen"]
+    },
+    "ronde-van-vlaanderen": {
+      "br": [{"service": "Disney+ (ESPN)", "note": "provável (Flanders Classics/ESPN América Latina); confirmar"}],
+      "abroad": [
+        {"service": "france.tv (France 3)", "country": "FR", "lang": "fr", "free": true, "note": "só a parte final (desde ~13h35); conta gratuita"},
+        {"service": "RTL Play (RTL-TVi)", "country": "BE", "lang": "fr", "free": true, "note": "conta gratuita"},
+        {"service": "SBS On Demand", "country": "AU", "lang": "en", "free": true, "note": "monumento ao vivo; conta gratuita"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "HBO Max (Eurosport)", "country": "FR", "lang": "fr", "free": false, "note": "corrida inteira desde a largada"},
+        {"service": "FloBikes", "country": "US", "lang": "en", "free": false, "note": "também no Canadá"}
+      ],
+      "confidence": "high",
+      "sources": ["https://veloracycling.com/how-to-watch/ronde-van-vlaanderen", "https://dicodusport.fr/blog/tour-des-flandres-2026-a-quelle-heure-et-sur-quelle-chaine-tv-suivre-le-ronde-en-direct/", "https://www.sbs.com.au/aboutus/2026/03/20/feast-for-cycling-fans-as-sbs-extends-road-cycling-broadcasts-to-include-all-grand-tours-and-monuments/"]
+    },
+    "itzulia-basque-country": {
+      "br": [],
+      "abroad": [
+        {"service": "SBS On Demand", "country": "AU", "lang": "en", "free": true, "note": "conta gratuita; confirmar grade"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "FloBikes", "country": "US", "lang": "en", "free": false, "note": "também no Canadá"},
+        {"service": "HBO Max (Eurosport)", "country": "FR", "lang": "fr", "free": false, "note": "assinatura"}
+      ],
+      "confidence": "low",
+      "sources": ["https://www.domestiquecycling.com/en/news/how-to-watch-itzulia-basque-country-2026-streaming-and-tv-by-country/"]
+    },
+    "paris-roubaix": {
+      "br": [{"service": "Disney+ (ESPN)", "note": "contrato ESPN-ASO América Latina até 2027"}],
+      "abroad": [
+        {"service": "france.tv (France 3)", "country": "FR", "lang": "fr", "free": true, "note": "corrida inteira; conta gratuita"},
+        {"service": "RTBF Auvio", "country": "BE", "lang": "fr", "free": true, "note": "conta gratuita"},
+        {"service": "SBS On Demand", "country": "AU", "lang": "en", "free": true, "note": "conta gratuita"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "Peacock", "country": "US", "lang": "en", "free": false, "note": "corridas ASO nos EUA"}
+      ],
+      "confidence": "high",
+      "sources": ["https://veloracycling.com/how-to-watch/paris-roubaix", "https://endurance.biz/2022/industry-news/espn-secures-le-tour-and-la-vuelta-broadcast-rights-in-latin-america-caribbean/"]
+    },
+    "amstel-gold-race": {
+      "br": [],
+      "abroad": [
+        {"service": "france.tv (France Télévisions)", "country": "FR", "lang": "fr", "free": true, "note": "conta gratuita; confirmar grade"},
+        {"service": "RTL Play (RTL-TVi)", "country": "BE", "lang": "fr", "free": true, "note": "conta gratuita"},
+        {"service": "SBS On Demand", "country": "AU", "lang": "en", "free": true, "note": "conta gratuita"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "FloBikes", "country": "US", "lang": "en", "free": false, "note": "também no Canadá"}
+      ],
+      "confidence": "medium",
+      "sources": ["https://veloracycling.com/how-to-watch/amstel-gold-race"]
+    },
+    "la-fleche-wallonne": {
+      "br": [{"service": "Disney+ (ESPN)", "note": "corrida ASO; contrato ESPN América Latina até 2027"}],
+      "abroad": [
+        {"service": "france.tv (France Télévisions)", "country": "FR", "lang": "fr", "free": true, "note": "conta gratuita"},
+        {"service": "RTBF Auvio", "country": "BE", "lang": "fr", "free": true, "note": "conta gratuita"},
+        {"service": "SBS On Demand", "country": "AU", "lang": "en", "free": true, "note": "conta gratuita"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "Peacock", "country": "US", "lang": "en", "free": false, "note": "corridas ASO nos EUA"}
+      ],
+      "confidence": "high",
+      "sources": ["https://veloracycling.com/how-to-watch/la-fleche-wallonne", "https://digitaltveurope.com/2023/07/24/france-televisions-and-aso-renew-tour-de-france-agreement-until-2030"]
+    },
+    "liege-bastogne-liege": {
+      "br": [{"service": "Disney+ (ESPN)", "note": "corrida ASO; contrato ESPN América Latina até 2027"}],
+      "abroad": [
+        {"service": "france.tv (France 3)", "country": "FR", "lang": "fr", "free": true, "note": "corrida inteira no france.tv; conta gratuita"},
+        {"service": "RTBF Auvio", "country": "BE", "lang": "fr", "free": true, "note": "conta gratuita"},
+        {"service": "SBS On Demand", "country": "AU", "lang": "en", "free": true, "note": "monumento ao vivo; conta gratuita"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "Peacock", "country": "US", "lang": "en", "free": false, "note": "corridas ASO nos EUA"}
+      ],
+      "confidence": "high",
+      "sources": ["https://veloracycling.com/how-to-watch/liege-bastogne-liege", "https://digitaltveurope.com/2023/07/24/france-televisions-and-aso-renew-tour-de-france-agreement-until-2030"]
+    },
+    "tour-de-romandie": {
+      "br": [],
+      "abroad": [
+        {"service": "RTS Play (RTS 2)", "country": "CH", "lang": "fr", "free": true, "note": "ao vivo só com IP suíço"},
+        {"service": "SBS On Demand", "country": "AU", "lang": "en", "free": true, "note": "conta gratuita; confirmar grade"},
+        {"service": "La Chaîne L'Équipe / lequipe.fr", "country": "FR", "lang": "fr", "free": true, "note": "TV aberta; confirmar etapas"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "FloBikes", "country": "US", "lang": "en", "free": false, "note": "também no Canadá"}
+      ],
+      "confidence": "medium",
+      "sources": ["https://veloracycling.com/how-to-watch/tour-de-romandie"]
+    },
+    "eschborn-frankfurt": {
+      "br": [],
+      "abroad": [
+        {"service": "SBS On Demand", "country": "AU", "lang": "en", "free": true, "note": "conta gratuita"},
+        {"service": "RTBF Auvio", "country": "BE", "lang": "fr", "free": true, "note": "listado em guia; confirmar"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "HBO Max (Eurosport)", "country": "FR", "lang": "fr", "free": false, "note": "Eurosport França"},
+        {"service": "FloBikes", "country": "US", "lang": "en", "free": false, "note": "também no Canadá"}
+      ],
+      "confidence": "medium",
+      "sources": ["https://www.domestiquecycling.com/en/news/how-to-watch-the-2026-eschborn-frankfurt-live-streaming-and-tv-by-country/", "https://www.hessenschau.de/sport/mehr-sport/radrennen-frankfurt/radrennen-eschborn-frankfurt-2026-live-im-stream-tv-und-ticker-v5,radrennen-frankfurt-tv-live2026-100.html"]
+    },
+    "giro-d-italia": {
+      "br": [{"service": "Disney+ (ESPN)", "note": "provável: Giro lista ESPN e DirecTV para a América do Sul; confirmar grade no Brasil"}],
+      "abroad": [
+        {"service": "SBS On Demand", "country": "AU", "lang": "en", "free": true, "note": "todas as etapas ao vivo; conta gratuita"},
+        {"service": "RTS Play", "country": "CH", "lang": "fr", "free": true, "note": "SRG ao vivo; só com IP suíço"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "HBO Max", "country": "US", "lang": "en", "free": false, "note": "plano com esporte ao vivo"},
+        {"service": "HBO Max (Eurosport)", "country": "FR", "lang": "fr", "free": false, "note": "sem TV aberta na França"}
+      ],
+      "confidence": "medium",
+      "sources": ["https://www.giroditalia.it/en/news/giro-ditalia-2026-where-to-watch-it-on-tv/", "https://veloracycling.com/how-to-watch/giro-d-italia/stage-9", "https://www.expreso.ec/deportes/giro-italia-2026-fechas-etapas-ver-vivo-son-ciclistas-ecuador-281207.html"]
+    },
+    "tour-auvergne-rhone-alpes": {
+      "br": [{"service": "Disney+ (ESPN)", "note": "ex-Dauphiné, corrida ASO incluída no contrato ESPN até 2027"}],
+      "abroad": [
+        {"service": "france.tv (France Télévisions)", "country": "FR", "lang": "fr", "free": true, "note": "conta gratuita"},
+        {"service": "RTBF Auvio", "country": "BE", "lang": "fr", "free": true, "note": "conta gratuita"},
+        {"service": "SBS On Demand", "country": "AU", "lang": "en", "free": true, "note": "conta gratuita"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "Peacock", "country": "US", "lang": "en", "free": false, "note": "corridas ASO nos EUA"}
+      ],
+      "confidence": "high",
+      "sources": ["https://veloracycling.com/how-to-watch/tour-auvergne-rhone-alpes", "https://maquinadoesporte.com.br/outros/espn-renova-contrato-de-direitos-de-tv-da-volta-da-espanha-para-america-latina/"]
+    },
+    "copenhagen-sprint": {
+      "br": [],
+      "abroad": [
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "HBO Max", "country": "US", "lang": "en", "free": false, "note": "listado em guia; confirmar"},
+        {"service": "HBO Max (Eurosport)", "country": "FR", "lang": "fr", "free": false, "note": "assinatura"}
+      ],
+      "confidence": "low",
+      "sources": ["https://www.domestiquecycling.com/en/news/how-to-watch-the-2026-copenhagen-sprint-live-streaming-and-tv-by-country/"]
+    },
+    "tour-de-suisse": {
+      "br": [],
+      "abroad": [
+        {"service": "RTS Play (RTS 2)", "country": "CH", "lang": "fr", "free": true, "note": "ao vivo só com IP suíço"},
+        {"service": "La Chaîne L'Équipe / lequipe.fr", "country": "FR", "lang": "fr", "free": true, "note": "todas as etapas em TV aberta"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "FloBikes", "country": "US", "lang": "en", "free": false, "note": "também no Canadá"}
+      ],
+      "confidence": "high",
+      "sources": ["https://www.tourdesuisse.ch/en/broadcast/", "https://dicodusport.fr/blog/tour-de-suisse-2026-en-direct-a-quelle-heure-et-sur-quelle-chaine-tv-suivre-la-course/"]
+    },
+    "tour-de-france": {
+      "br": [{"service": "Disney+ (ESPN)", "note": "ESPN tem a América Latina até 2027; etapa completa no streaming, final na TV"}],
+      "abroad": [
+        {"service": "france.tv (France 2/3)", "country": "FR", "lang": "fr", "free": true, "note": "todas as etapas; conta gratuita"},
+        {"service": "RTBF Auvio", "country": "BE", "lang": "fr", "free": true, "note": "conta gratuita"},
+        {"service": "RTS Play", "country": "CH", "lang": "fr", "free": true, "note": "só com IP suíço"},
+        {"service": "SBS On Demand", "country": "AU", "lang": "en", "free": true, "note": "todas as etapas; conta gratuita com CEP australiano"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "ITV não tem mais o Tour no Reino Unido desde 2026"},
+        {"service": "Peacock", "country": "US", "lang": "en", "free": false, "note": "todas as etapas"}
+      ],
+      "confidence": "high",
+      "sources": ["https://exame.com/esporte/quando-comeca-o-tour-de-france-2026-veja-onde-assistir-e-programacao/", "https://veloracycling.com/how-to-watch/tour-de-france", "https://www.mediaweek.com.au/sbs-brings-tour-de-france-back-live-and-free-in-2026/"]
+    },
+    "san-sebastian": {
+      "br": [],
+      "abroad": [
+        {"service": "RTBF Auvio (Tipik)", "country": "BE", "lang": "fr", "free": true, "note": "conta gratuita"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "FloBikes", "country": "US", "lang": "en", "free": false, "note": "também no Canadá"},
+        {"service": "HBO Max (Eurosport)", "country": "FR", "lang": "fr", "free": false, "note": "confirmar"}
+      ],
+      "confidence": "medium",
+      "sources": ["https://techradar.com/how-to-watch/cycling/clasica-san-sebastian-2026-free-live-streams", "https://www.flobikes.com/articles/14817808-how-to-watch-2026-clasica-de-san-sebastian-cycling"]
+    },
+    "tour-de-pologne": {
+      "br": [],
+      "abroad": [
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "HBO Max (Eurosport 2)", "country": "FR", "lang": "fr", "free": false, "note": "assinatura"},
+        {"service": "FloBikes", "country": "US", "lang": "en", "free": false, "note": "também no Canadá"}
+      ],
+      "confidence": "medium",
+      "sources": ["https://www.domestiquecycling.com/en/news/how-to-watch-the-2026-tour-de-pologne-streaming-and-tv-by-country/", "https://cybernews.com/stream-online/how-to-watch-tour-de-pologne-2026/"]
+    },
+    "cyclassics-hamburg": {
+      "br": [],
+      "abroad": [
+        {"service": "RTBF Auvio", "country": "BE", "lang": "fr", "free": true, "note": "listado em guia; confirmar"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "FloBikes", "country": "US", "lang": "en", "free": false, "note": "também no Canadá"},
+        {"service": "HBO Max (Eurosport)", "country": "FR", "lang": "fr", "free": false, "note": "assinatura"}
+      ],
+      "confidence": "low",
+      "sources": ["https://www.domestiquecycling.com/en/news/how-to-watch-the-2026-adac-cyclassics-streaming-and-tv-by-country/", "https://procyclinguk.com/how-to-watch-adac-cyclassics-2026-in-the-uk/"]
+    },
+    "renewi-tour": {
+      "br": [],
+      "abroad": [
+        {"service": "RTBF Auvio (Tipik)", "country": "BE", "lang": "fr", "free": true, "note": "conta gratuita"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "FloBikes", "country": "US", "lang": "en", "free": false, "note": "também no Canadá"},
+        {"service": "HBO Max (Eurosport)", "country": "FR", "lang": "fr", "free": false, "note": "assinatura"}
+      ],
+      "confidence": "medium",
+      "sources": ["https://www.domestiquecycling.com/en/news/how-to-watch-the-2026-renewi-tour-streaming-and-tv-by-country/", "https://www.flobikes.com/articles/15255529-how-to-watch-2026-renewi-tour-cycling"]
+    },
+    "bretagne-classic": {
+      "br": [],
+      "abroad": [
+        {"service": "HBO Max (Eurosport)", "country": "FR", "lang": "fr", "free": false, "note": "em 2025 só streaming pago; TV aberta não confirmada"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "FloBikes", "country": "US", "lang": "en", "free": false, "note": "também no Canadá"}
+      ],
+      "confidence": "low",
+      "sources": ["https://www.flobikes.com/articles/15255526-how-to-watch-2026-bretagne-classic-ouest-cycling", "https://www.domestiquecycling.com/en/news/how-to-watch-the-2026-bretagne-classic-streaming-and-tv-by-country/"]
+    },
+    "vuelta-a-espana": {
+      "br": [{"service": "Disney+ (ESPN)", "note": "ESPN renovou a Vuelta para América Latina até 2027"}],
+      "abroad": [
+        {"service": "SBS On Demand", "country": "AU", "lang": "en", "free": true, "note": "todas as etapas; conta gratuita com CEP australiano"},
+        {"service": "RTBF Auvio", "country": "BE", "lang": "fr", "free": true, "note": "via acordo UER; cobertura parcial, confirmar"},
+        {"service": "RTS Play", "country": "CH", "lang": "fr", "free": true, "note": "via acordo UER; parcial, só com IP suíço"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "todas as etapas"},
+        {"service": "HBO Max (Eurosport)", "country": "FR", "lang": "fr", "free": false, "note": "sem TV aberta na França"},
+        {"service": "Peacock", "country": "US", "lang": "en", "free": false, "note": "todas as etapas"}
+      ],
+      "confidence": "high",
+      "sources": ["https://veloracycling.com/how-to-watch/la-vuelta-ciclista-a-espana", "https://maquinadoesporte.com.br/outros/espn-renova-contrato-de-direitos-de-tv-da-volta-da-espanha-para-america-latina/", "https://www.tv-direct.fr/actualites/vuelta-2026-en-direct-tv/"]
+    },
+    "gp-quebec": {
+      "br": [],
+      "abroad": [
+        {"service": "TVA+", "country": "CA", "lang": "fr", "free": true, "note": "grátis no Canadá; pode pedir conta"},
+        {"service": "CBC Gem", "country": "CA", "lang": "en", "free": true, "note": "grátis no Canadá"},
+        {"service": "La Chaîne L'Équipe / lequipe.fr", "country": "FR", "lang": "fr", "free": true, "note": "listado em guia; confirmar"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "FloBikes", "country": "CA", "lang": "en", "free": false, "note": "assinatura"}
+      ],
+      "confidence": "medium",
+      "sources": ["https://veloracycling.com/how-to-watch/grand-prix-cycliste-de-quebec"]
+    },
+    "gp-montreal": {
+      "br": [],
+      "abroad": [
+        {"service": "TVA+", "country": "CA", "lang": "fr", "free": true, "note": "grátis no Canadá; pode pedir conta"},
+        {"service": "CBC Gem", "country": "CA", "lang": "en", "free": true, "note": "grátis no Canadá"},
+        {"service": "La Chaîne L'Équipe / lequipe.fr", "country": "FR", "lang": "fr", "free": true, "note": "listado em guia; confirmar"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "FloBikes", "country": "CA", "lang": "en", "free": false, "note": "assinatura"}
+      ],
+      "confidence": "medium",
+      "sources": ["https://veloracycling.com/how-to-watch/grand-prix-cycliste-de-quebec"]
+    },
+    "il-lombardia": {
+      "br": [],
+      "abroad": [
+        {"service": "RTBF Auvio", "country": "BE", "lang": "fr", "free": true, "note": "conta gratuita"},
+        {"service": "RTS Play", "country": "CH", "lang": "fr", "free": true, "note": "provável (SRG tem RCS); só com IP suíço"},
+        {"service": "SBS On Demand", "country": "AU", "lang": "en", "free": true, "note": "direitos até 2028; conta gratuita"},
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "HBO Max", "country": "US", "lang": "en", "free": false, "note": "corridas RCS nos EUA"}
+      ],
+      "confidence": "medium",
+      "sources": ["https://www.cyclingnews.com/cycling-culture/streaming/watch-il-lombardia-2026-official-broadcasters-free/", "https://www.sbs.com.au/aboutus/2026/03/20/feast-for-cycling-fans-as-sbs-extends-road-cycling-broadcasts-to-include-all-grand-tours-and-monuments/"]
+    },
+    "tour-of-guangxi": {
+      "br": [],
+      "abroad": [
+        {"service": "HBO Max (TNT Sports)", "country": "GB", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "HBO Max", "country": "US", "lang": "en", "free": false, "note": "assinatura"},
+        {"service": "FloBikes", "country": "CA", "lang": "en", "free": false, "note": "assinatura"}
+      ],
+      "confidence": "medium",
+      "sources": ["https://veloracycling.com/how-to-watch/tour-of-guangxi"]
+    }
+  },
+  "general_notes": "Brasil: a única via legal com cobertura relevante é o Disney+ (plano com ESPN), por causa do contrato ESPN-ASO para América Latina até 2027 (Tour, Vuelta, Paris-Nice, Paris-Roubaix, Flèche, Liège, Dauphiné/Tour AURA). Giro e clássicas Flanders Classics aparecem na ESPN para a América Latina, mas não há confirmação explícita para o Brasil. Corridas RCS menores (Strade, Tirreno, Sanremo, Lombardia) vão para DirecTV na América do Sul, que não opera no Brasil. No Roku Brasil existem os apps Disney+, HBO Max e YouTube (o HBO Max brasileiro não tem Eurosport). Exterior grátis: SBS On Demand (AU, inglês) é o mais amplo em 2026 (todas as Grandes Voltas, os 5 Monumentos, Tirreno, Catalunya e várias outras), precisa de conta gratuita com CEP australiano. Em francês: france.tv (ASO + parte final de Flandres), RTBF Auvio (muitas corridas, conta gratuita), RTL Play (clássicas flamengas), RTS Play (Giro, Sanremo, Romandie, Suisse, Tour; ao vivo só com IP suíço), La Chaîne L'Équipe (Tour de Suisse, Gent-Wevelgem, Omloop). Canadá: TVA+ (fr) e CBC Gem (en) grátis para GP Québec/Montréal. ITVX não tem mais o Tour (no Reino Unido o Tour passou para TNT Sports/HBO Max em 2026; Channel 5 só resumos). Pagos: no Reino Unido, desde 26/03/2026, TNT Sports está dentro do HBO Max (substituiu o discovery+) e cobre praticamente todo o WorldTour; na Europa continental, Eurosport fica no HBO Max; nos EUA, Peacock (ASO), HBO Max (RCS) e FloBikes (Flanders Classics e outras); no Canadá, FloBikes cobre quase tudo. GCN+ não existe mais. Acordo UER-ASO/Unipublic estendido até 2032; France Télévisions com ASO até 2030; SBS tem Lombardia até 2028 e Tirreno por 3 anos. Os direitos de 2027 seguem em geral os de 2026, mas convém conferir perto de cada corrida."
+}
