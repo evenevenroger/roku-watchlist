@@ -21,3 +21,8 @@ node_modules/
 *.key
 .DS_Store
 Thumbs.db
+
+# senhas do Roku e pacotes assinados (tools/instalar_no_roku.py)
+roku-watchlist/roku_senha.txt
+roku-watchlist/roku_chave.txt
+roku-watchlist/pacotes/
