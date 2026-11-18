@@ -25,6 +25,12 @@ class LocalListTests(unittest.TestCase):
         self.assertEqual([i["pos"] for i in items], list(range(1, 101)))
         self.assertEqual(len({i["imdb"] for i in items}), 100)
 
+    def test_rotten100_file_has_distinct_titles(self):
+        with open(os.path.join(data.LOCAL_LISTS_DIR, "rotten100.json"), encoding="utf-8") as f:
+            items = json.load(f)["items"]
+        self.assertGreater(len(items), 500)
+        self.assertEqual(len({i["imdb"] for i in items}), len(items))
+
 
 if __name__ == "__main__":
     unittest.main()

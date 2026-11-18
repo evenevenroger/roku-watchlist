@@ -14,6 +14,10 @@
       "name": "100 melhores filmes brasileiros (Abraccine)"
     },
     {
+      "id": "local:rotten100",
+      "name": "Filmes com 100% no Rotten Tomatoes"
+    },
+    {
       "id": "rated8",
       "name": "Vistos com nota 8+"
     },
