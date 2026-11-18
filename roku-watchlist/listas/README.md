@@ -13,6 +13,7 @@ lista, cada um com o código do IMDb:
 | `abraccine.json` | Wikipedia (pt): 100 melhores filmes brasileiros segundo a Abraccine, 2016 | fixa |
 | `rotten100.json` | Wikipedia (en): filmes com 100% no Rotten Tomatoes | a cada seis meses (1º de maio e 1º de novembro) |
 | `ofcs_scifi.json` | Online Film Critics Society: Top 100 Sci-Fi Films, 2002 (ofcs.org) | fixa |
+| `ofcs_overlooked90s.json` | Online Film Critics Society: Top 100 Overlooked Films of the 1990s, 2004 (ofcs.org; sem anos, *Hamlet* é o de Branagh, 1996) | fixa |
 
 ## Atualização semestral do `rotten100.json`
 

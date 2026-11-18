@@ -22,6 +22,10 @@
       "name": "OFCS Top 100 Sci-Fi"
     },
     {
+      "id": "local:ofcs_overlooked90s",
+      "name": "OFCS Top 100 Overlooked Films of the 1990s"
+    },
+    {
       "id": "rated8",
       "name": "Vistos com nota 8+"
     },
