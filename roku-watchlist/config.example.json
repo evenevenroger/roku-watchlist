@@ -26,6 +26,10 @@
       "name": "OFCS Top 100 Overlooked Films of the 1990s"
     },
     {
+      "id": "local:ofcs_first_films",
+      "name": "OFCS 100 Best First Films"
+    },
+    {
       "id": "rated8",
       "name": "Vistos com nota 8+"
     },
