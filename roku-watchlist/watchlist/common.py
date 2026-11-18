@@ -17,6 +17,7 @@ LOG_PATH = os.path.join(DATA_DIR, "server.log")
 STATIC = os.path.join(BASE, "static")
 CHANNEL_DIR = os.path.join(BASE, "roku-channel")
 CYCLING_CHANNEL_DIR = os.path.join(BASE, "roku-ciclismo")   # canal beta de ciclismo
+LOCAL_LISTS_DIR = os.path.join(BASE, "listas")   # listas que não estão no IMDb (id "local:<arquivo>")
 
 
 

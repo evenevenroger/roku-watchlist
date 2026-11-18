@@ -1,9 +1,10 @@
 """Sincronização (IMDb → JustWatch) e montagem dos dados para a página e o canal."""
+import os
 import time
 import threading
 
 from .awards import AWARDS, fetch_awards
-from .common import CACHE_PATH, CONFIG, RT_PATH, load_json, lock, log, save_json, state
+from .common import CACHE_PATH, CONFIG, LOCAL_LISTS_DIR, RT_PATH, load_json, lock, log, save_json, state
 from .imdb import fetch_english_titles, fetch_list, fetch_rated, fetch_titles, fetch_user_lists
 from .justwatch import JustWatchUnavailable, jw_lookup, roku_link, service_for
 from .rottentomatoes import rt_lock
@@ -146,6 +147,15 @@ def sync(force_offers=False, reserved=False, offers_only=False):
                     cache.setdefault("awards_cats", {})[group] = cats
                     newest = {tid: max((a["y"] or 0) for a in v) for tid, v in awards.items()}
                     items.sort(key=lambda t: (-newest.get(t["id"], 0), t["title"] or ""))
+                elif L["id"].startswith("local:"):
+                    try:
+                        items = fetch_local_list(L["id"].split(":", 1)[1])
+                    except Exception:  # noqa: BLE001 — fica a cópia anterior
+                        log.exception("não consegui ler a lista %s; mantenho a cópia anterior", L["name"])
+                        problems.append("Lista preservada sem atualizar: " + L["name"])
+                        if L["id"] in (cache.get("lists") or {}):
+                            lists[L["id"]] = cache["lists"][L["id"]]
+                        continue
                 elif L["id"].startswith("rated"):
                     minimum = int(L["id"][5:] or 8)
                     items = [t for t, v in rated_all if v >= minimum]
@@ -263,6 +273,16 @@ def sync(force_offers=False, reserved=False, offers_only=False):
 
 
 AWARDS_MAX_AGE = 30 * 86400
+
+
+def fetch_local_list(name):
+    """Lista guardada em listas/<name>.json (ex.: a da Abraccine), na ordem do arquivo."""
+    entries = load_json(os.path.join(LOCAL_LISTS_DIR, name + ".json"), None)
+    if not entries:
+        raise FileNotFoundError(f"listas/{name}.json")
+    ids = list(dict.fromkeys(e["imdb"] for e in entries["items"]))
+    found = {t["id"]: t for t in fetch_titles(ids)}
+    return [found[tid] for tid in ids if tid in found]
 
 
 def effective_lists(cache):
