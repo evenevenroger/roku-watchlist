@@ -18,6 +18,10 @@
       "name": "Filmes com 100% no Rotten Tomatoes"
     },
     {
+      "id": "local:ofcs_scifi",
+      "name": "OFCS Top 100 Sci-Fi"
+    },
+    {
       "id": "rated8",
       "name": "Vistos com nota 8+"
     },
